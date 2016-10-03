@@ -4,6 +4,7 @@ caffe_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto_p
 
 # include python files either to force generation
 add_library(proto STATIC ${proto_hdrs} ${proto_srcs} ${proto_python})
+target_link_libraries(proto PUBLIC protobuf::libprotobuf)
 set(Caffe_LINKER_LIBS proto ${Caffe_LINKER_LIBS}) # note, crucial to prepend!
 caffe_default_properties(proto)
 
