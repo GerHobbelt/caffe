@@ -2,9 +2,9 @@
 set(Caffe_LINKER_LIBS "")
 
 # ---[ Boost
+hunter_add_package(Boost COMPONENTS system thread filesystem)
 find_package(Boost 1.46 REQUIRED COMPONENTS system thread filesystem)
-include_directories(SYSTEM ${Boost_INCLUDE_DIR})
-list(APPEND Caffe_LINKER_LIBS ${Boost_LIBRARIES})
+list(APPEND Caffe_LINKER_LIBS Boost::system Boost::filesystem Boost::thread)
 
 # ---[ Threads
 find_package(Threads REQUIRED)
@@ -144,8 +144,8 @@ if(BUILD_python)
     set(HAVE_PYTHON TRUE)
     if(BUILD_python_layer)
       add_definitions(-DWITH_PYTHON_LAYER)
-      include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
-      list(APPEND Caffe_LINKER_LIBS ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})
+      include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR})
+      list(APPEND Caffe_LINKER_LIBS ${PYTHON_LIBRARIES} Boost::system Boost::filesystem Boost::thread)
     endif()
   endif()
 endif()
