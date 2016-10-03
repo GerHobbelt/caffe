@@ -6,6 +6,12 @@ if(POLICY CMP0054)
   cmake_policy(SET CMP0054 NEW)
 endif()
 
+include("cmake/HunterGate.cmake")
+HunterGate(
+    URL "https://github.com/ruslo/hunter/archive/v0.16.2.tar.gz"
+    SHA1 "defe8ce479f506010eaa602e626a42eb714066cf"
+)
+
 # ---[ Caffe project
 project(Caffe C CXX)
 
