@@ -11,22 +11,24 @@ find_package(Threads REQUIRED)
 list(APPEND Caffe_LINKER_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
 # ---[ Google-glog
-include("cmake/External/glog.cmake")
-include_directories(SYSTEM ${GLOG_INCLUDE_DIRS})
-list(APPEND Caffe_LINKER_LIBS ${GLOG_LIBRARIES})
+hunter_add_package(glog)
+find_package(glog CONFIG REQUIRED)
+list(APPEND Caffe_LINKER_LIBS glog)
 
 # ---[ Google-gflags
-include("cmake/External/gflags.cmake")
-include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
-list(APPEND Caffe_LINKER_LIBS ${GFLAGS_LIBRARIES})
+hunter_add_package(gflags)
+find_package(gflags CONFIG REQUIRED)
+list(APPEND Caffe_LINKER_LIBS gflags-static)
 
 # ---[ Google-protobuf
 include(cmake/ProtoBuf.cmake)
 
 # ---[ HDF5
-find_package(HDF5 COMPONENTS HL REQUIRED)
-include_directories(SYSTEM ${HDF5_INCLUDE_DIRS} ${HDF5_HL_INCLUDE_DIR})
-list(APPEND Caffe_LINKER_LIBS ${HDF5_LIBRARIES})
+hunter_add_package(hdf5)
+find_package(ZLIB CONFIG REQUIRED)
+find_package(szip CONFIG REQUIRED)
+find_package(hdf5 CONFIG REQUIRED)
+list(APPEND Caffe_LINKER_LIBS hdf5 hdf5_hl)
 
 # ---[ LMDB
 if(USE_LMDB)
@@ -89,9 +91,9 @@ if(NOT APPLE)
     include_directories(SYSTEM ${Atlas_INCLUDE_DIR})
     list(APPEND Caffe_LINKER_LIBS ${Atlas_LIBRARIES})
   elseif(BLAS STREQUAL "Open" OR BLAS STREQUAL "open")
-    find_package(OpenBLAS REQUIRED)
-    include_directories(SYSTEM ${OpenBLAS_INCLUDE_DIR})
-    list(APPEND Caffe_LINKER_LIBS ${OpenBLAS_LIB})
+    hunter_add_package(OpenBLAS)
+    find_package(OpenBLAS CONFIG REQUIRED)
+    list(APPEND Caffe_LINKER_LIBS OpenBLAS::OpenBLAS)
   elseif(BLAS STREQUAL "MKL" OR BLAS STREQUAL "mkl")
     find_package(MKL REQUIRED)
     include_directories(SYSTEM ${MKL_INCLUDE_DIR})
