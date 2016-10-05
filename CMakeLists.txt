@@ -8,8 +8,8 @@ endif()
 
 include("cmake/HunterGate.cmake")
 HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.16.2.tar.gz"
-    SHA1 "defe8ce479f506010eaa602e626a42eb714066cf"
+    URL "https://github.com/ruslo/hunter/archive/v0.16.5.tar.gz"
+    SHA1 "51594bfe1f58a7264c811a0d84bea79fc6758d6b"
 )
 
 # ---[ Caffe project
