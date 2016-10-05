@@ -20,21 +20,7 @@
 # OpenCV dependency (optional)
 
 if(@USE_OPENCV@)
-  if(NOT OpenCV_FOUND)
-    set(Caffe_OpenCV_CONFIG_PATH "@OpenCV_CONFIG_PATH@")
-    if(Caffe_OpenCV_CONFIG_PATH)
-      get_filename_component(Caffe_OpenCV_CONFIG_PATH ${Caffe_OpenCV_CONFIG_PATH} ABSOLUTE)
-
-      if(EXISTS ${Caffe_OpenCV_CONFIG_PATH} AND NOT TARGET opencv_core)
-        message(STATUS "Caffe: using OpenCV config from ${Caffe_OpenCV_CONFIG_PATH}")
-        include(${Caffe_OpenCV_CONFIG_PATH}/OpenCVModules.cmake)
-      endif()
-
-    else()
-      find_package(OpenCV REQUIRED)
-    endif()
-    unset(Caffe_OpenCV_CONFIG_PATH)
-  endif()
+  find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc imgcodecs)
 endif()
 
 # Compute paths
