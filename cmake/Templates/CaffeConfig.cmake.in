@@ -20,7 +20,11 @@
 # OpenCV dependency (optional)
 
 if(@USE_OPENCV@)
-  find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc imgcodecs)
+  if("@OpenCV_VERSION@" MATCHES "^2\\.")
+    find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc)
+  else()
+    find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc imgcodecs)
+  endif()
 endif()
 
 # Compute paths

@@ -72,7 +72,14 @@ endif()
 # ---[ OpenCV
 if(USE_OPENCV)
   hunter_add_package(OpenCV)
-  find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc imgcodecs)
+
+  find_package(OpenCV REQUIRED)
+  if(OpenCV_VERSION MATCHES "^2\\.")
+    find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc)
+  else()
+    find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc imgcodecs)
+  endif()
+
   list(APPEND Caffe_LINKER_LIBS ${OpenCV_LIBS})
   message(STATUS "OpenCV found (${OpenCV_CONFIG_PATH})")
   add_definitions(-DUSE_OPENCV)
