@@ -237,6 +237,20 @@ using boost::asio::ip::tcp;
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 
 
+typedef struct __attribute__ ((__packed__)) {
+	uint8_t label;
+	float score;
+	uint16_t xmin;
+	uint16_t xmax;
+	uint16_t ymin;
+	uint16_t ymax;
+} detection_info;
+
+typedef struct __attribute__ ((__packed__)) {
+	uint16_t count;
+	detection_info detection[INT_MAX]; // over_allocated since variable length arrays are not allowed in C++
+} detection_results;
+
 #define IMAGESIZE 300
 #define BUFFERLENGTH (IMAGESIZE*IMAGESIZE*3)
 
@@ -327,6 +341,8 @@ int main(int argc, char** argv) {
       cv::Mat img = cv::Mat(2,sizes,CV_8UC3,(void*)inputBuffer);
       std::vector<vector<float> > detections = detector.Detect(img);
 
+      int num_detections = 0;
+      detection_results *results=(detection_results*)inputBuffer;
       /* Print the detection results. */
       for (int i = 0; i < detections.size(); ++i) {
         const vector<float>& d = detections[i];
@@ -341,8 +357,19 @@ int main(int argc, char** argv) {
           out << static_cast<int>(d[4] * img.rows) << " ";
           out << static_cast<int>(d[5] * img.cols) << " ";
           out << static_cast<int>(d[6] * img.rows) << std::endl;
+          results->detection[num_detections].label = static_cast<uint8_t>(d[1]);
+          results->detection[num_detections].score = score;
+          results->detection[num_detections].xmin = static_cast<uint16_t>(d[3] * img.cols);
+          results->detection[num_detections].ymin = static_cast<uint16_t>(d[4] * img.rows);
+          results->detection[num_detections].xmax = static_cast<uint16_t>(d[5] * img.cols);
+          results->detection[num_detections].ymax = static_cast<uint16_t>(d[6] * img.rows);
+          num_detections++;
         }
       }
+      results->count = num_detections;
+      size_t resultsize = offsetof(detection_results,detection[0])+num_detections*sizeof(detection_info);
+      boost::asio::write(*sock,boost::asio::buffer(&inputBuffer,resultsize));
+      out << "wrote " << num_detections << " detections in " << resultsize << " bytes" << std::endl;
   }
   return 0;
 }
