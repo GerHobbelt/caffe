@@ -32,6 +32,7 @@ class SGDSolver : public Solver<Dtype> {
   virtual void Regularize(int param_id);
   virtual void ComputeUpdateValue(int param_id, Dtype rate);
   virtual void ClipGradients();
+  virtual void ClipGradients(int start, int end);
   // juanecito
 
  protected:

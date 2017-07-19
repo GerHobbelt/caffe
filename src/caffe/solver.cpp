@@ -2,8 +2,10 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "boost/algorithm/string.hpp"
+
 #include "caffe/solver.hpp"
 #include "caffe/util/format.hpp"
 #include "caffe/util/hdf5.hpp"
@@ -58,6 +60,28 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
   }
   iter_ = 0;
   current_step_ = 0;
+
+  // juanecito
+
+	layerid_learnable_params_ids_.clear();
+	const vector<pair<int,int> >& param_layer_indices = this->net_->param_layer_indices();
+	int learnable_param_id = 0;
+
+	for (auto it : param_layer_indices)
+	{
+		auto it_layerid_learnable_params_ids = layerid_learnable_params_ids_.find(it.first);
+		if (it_layerid_learnable_params_ids == layerid_learnable_params_ids_.end())
+		{
+			layerid_learnable_params_ids_.insert(pair<int, std::vector<int>>(it.first, {learnable_param_id}));
+		}
+		else
+		{
+			it_layerid_learnable_params_ids->second.push_back(learnable_param_id);
+		}
+
+		learnable_param_id++;
+	}
+  // juanecito
 }
 
 // Load weights from the caffemodel(s) specified in "weights" solver parameter
