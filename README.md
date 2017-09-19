@@ -15,6 +15,14 @@ from a ROS node running on the main processing unit on board the aerial robot
 while SSD Multibox runs on an NVIDIA TX1 embedded GPU dedicated for neural
 network detections.
 
+Run Example:
+<pre>
+ #!/bin/sh
+ while sleep 1; do
+ 	./distribute/bin/ssd_server.bin models/VGGNet/VOC0712/SSD_300x300/deploy.prototxt models/VGGNet/VOC0712/SSD_300x300/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel
+ done
+</pre>
+
 # SSD: Single Shot MultiBox Detector
 
 [![Build Status](https://travis-ci.org/weiliu89/caffe.svg?branch=ssd)](https://travis-ci.org/weiliu89/caffe)
