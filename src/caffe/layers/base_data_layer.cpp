@@ -1,4 +1,4 @@
-#include <boost/thread.hpp>
+#include <thread>
 #include <vector>
 
 #include "caffe/blob.hpp"
@@ -84,23 +84,19 @@ void BasePrefetchingDataLayer<Dtype>::InternalThreadEntry() {
   }
 #endif
 
-  try {
-    while (!must_stop()) {
-      Batch<Dtype>* batch = prefetch_free_.pop();
-      load_batch(batch);
+  while (!must_stop()) {
+    Batch<Dtype>* batch = prefetch_free_.pop();
+    load_batch(batch);
 #ifndef CPU_ONLY
-      if (Caffe::mode() == Caffe::GPU) {
-        batch->data_.data().get()->async_gpu_push(stream);
-        if (this->output_labels_) {
-          batch->label_.data().get()->async_gpu_push(stream);
-        }
-        CUDA_CHECK(cudaStreamSynchronize(stream));
+    if (Caffe::mode() == Caffe::GPU) {
+      batch->data_.data().get()->async_gpu_push(stream);
+      if (this->output_labels_) {
+        batch->label_.data().get()->async_gpu_push(stream);
       }
-#endif
-      prefetch_full_.push(batch);
+      CUDA_CHECK(cudaStreamSynchronize(stream));
     }
-  } catch (boost::thread_interrupted&) {
-    // Interrupted exception is expected on shutdown
+#endif
+    prefetch_full_.push(batch);
   }
 #ifndef CPU_ONLY
   if (Caffe::mode() == Caffe::GPU) {

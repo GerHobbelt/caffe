@@ -12,8 +12,7 @@
 #include "caffe/util/math_functions.hpp"
 
 /**
- Forward declare boost::thread instead of including boost/thread.hpp
- to avoid a boost/NVCC issues (#1009, #1010) on OSX.
+ Forward declare boost::mutex instead of including boost/mutex.hpp
  */
 namespace boost { class mutex; }
 

@@ -3,7 +3,7 @@
 
 #ifdef USE_NCCL
 
-#include <boost/thread.hpp>
+#include <thread>
 
 #include <string>
 #include <vector>

@@ -4,10 +4,9 @@
 #include "caffe/common.hpp"
 
 /**
- Forward declare boost::thread instead of including boost/thread.hpp
- to avoid a boost/NVCC issues (#1009, #1010) on OSX.
+ Forward declare std::thread instead of including <thread>
  */
-namespace boost { class thread; }
+namespace std { class thread; }
 
 namespace caffe {
 
@@ -18,7 +17,7 @@ namespace caffe {
  */
 class InternalThread {
  public:
-  InternalThread() : thread_() {}
+  InternalThread() : thread_(), interruption_requested_(false) {}
   virtual ~InternalThread();
 
   /**
@@ -45,7 +44,8 @@ class InternalThread {
   void entry(int device, Caffe::Brew mode, int rand_seed,
       int solver_count, int solver_rank, bool multiprocess);
 
-  shared_ptr<boost::thread> thread_;
+  shared_ptr<std::thread> thread_;
+  bool interruption_requested_;
 };
 
 }  // namespace caffe

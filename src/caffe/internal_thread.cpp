@@ -1,4 +1,4 @@
-#include <boost/thread.hpp>
+#include <thread>
 #include <exception>
 
 #include "caffe/internal_thread.hpp"
@@ -15,7 +15,7 @@ bool InternalThread::is_started() const {
 }
 
 bool InternalThread::must_stop() {
-  return thread_ && thread_->interruption_requested();
+  return thread_ && interruption_requested_;
 }
 
 void InternalThread::StartInternalThread() {
@@ -31,8 +31,10 @@ void InternalThread::StartInternalThread() {
   int solver_rank = Caffe::solver_rank();
   bool multiprocess = Caffe::multiprocess();
 
+  interruption_requested_ = false;
+
   try {
-    thread_.reset(new boost::thread(&InternalThread::entry, this, device, mode,
+    thread_.reset(new std::thread(&InternalThread::entry, this, device, mode,
           rand_seed, solver_count, solver_rank, multiprocess));
   } catch (std::exception& e) {
     LOG(FATAL) << "Thread exception: " << e.what();
@@ -55,10 +57,9 @@ void InternalThread::entry(int device, Caffe::Brew mode, int rand_seed,
 
 void InternalThread::StopInternalThread() {
   if (is_started()) {
-    thread_->interrupt();
+    interruption_requested_ = true;
     try {
       thread_->join();
-    } catch (boost::thread_interrupted&) {
     } catch (std::exception& e) {
       LOG(FATAL) << "Thread exception: " << e.what();
     }

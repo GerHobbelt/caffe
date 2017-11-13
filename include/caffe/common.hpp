@@ -183,6 +183,7 @@ class Caffe {
  private:
   // The private constructor to avoid duplicate instantiation.
   Caffe();
+  static thread_local Caffe* thread_instance_;
 
   DISABLE_COPY_AND_ASSIGN(Caffe);
 };
