@@ -1,6 +1,6 @@
 #ifndef CAFFE_SOLVER_HPP_
 #define CAFFE_SOLVER_HPP_
-#include <boost/function.hpp>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -30,7 +30,7 @@ namespace caffe {
 /**
  * @brief Type of a function that returns a Solver Action enumeration.
  */
-typedef boost::function<SolverAction::Enum()> ActionCallback;
+typedef std::function<SolverAction::Enum()> ActionCallback;
 
 /**
  * @brief An interface for classes that perform optimization on Net%s.

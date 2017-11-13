@@ -3,6 +3,8 @@
 
 #include <queue>
 #include <string>
+#include <mutex>
+#include <condition_variable>
 
 namespace caffe {
 
@@ -27,15 +29,10 @@ class BlockingQueue {
   size_t size() const;
 
  protected:
-  /**
-   Move synchronization fields out instead of including boost/thread.hpp
-   to avoid a boost/NVCC issues (#1009, #1010) on OSX. Also fails on
-   Linux CUDA 7.0.18.
-   */
-  class sync;
+  mutable std::mutex mutex_;
+  std::condition_variable condition_;
 
   std::queue<T> queue_;
-  shared_ptr<sync> sync_;
 
 DISABLE_COPY_AND_ASSIGN(BlockingQueue);
 };

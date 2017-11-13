@@ -1,8 +1,8 @@
 #ifdef USE_OPENCV
 #include <string>
 #include <vector>
+#include <memory>
 
-#include "boost/scoped_ptr.hpp"
 #include "gtest/gtest.h"
 
 #include "caffe/blob.hpp"
@@ -17,7 +17,7 @@
 
 namespace caffe {
 
-using boost::scoped_ptr;
+using std::unique_ptr;
 
 template <typename TypeParam>
 class DataLayerTest : public MultiDeviceTest<TypeParam> {
@@ -43,9 +43,9 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
   void Fill(const bool unique_pixels, DataParameter_DB backend) {
     backend_ = backend;
     LOG(INFO) << "Using temporary dataset " << *filename_;
-    scoped_ptr<db::DB> db(db::GetDB(backend));
+    unique_ptr<db::DB> db(db::GetDB(backend));
     db->Open(*filename_, db::NEW);
-    scoped_ptr<db::Transaction> txn(db->NewTransaction());
+    unique_ptr<db::Transaction> txn(db->NewTransaction());
     for (int i = 0; i < 5; ++i) {
       Datum datum;
       datum.set_label(i);
@@ -135,9 +135,9 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
     const int num_inputs = 5;
     // Save data of varying shapes.
     LOG(INFO) << "Using temporary dataset " << *filename_;
-    scoped_ptr<db::DB> db(db::GetDB(backend));
+    unique_ptr<db::DB> db(db::GetDB(backend));
     db->Open(*filename_, db::NEW);
-    scoped_ptr<db::Transaction> txn(db->NewTransaction());
+    unique_ptr<db::Transaction> txn(db->NewTransaction());
     for (int i = 0; i < num_inputs; ++i) {
       Datum datum;
       datum.set_label(i);

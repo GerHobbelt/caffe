@@ -1,7 +1,7 @@
 #include <map>
+#include <memory>
 #include <string>
 
-#include "boost/scoped_ptr.hpp"
 #include "gtest/gtest.h"
 
 #include "caffe/common.hpp"
@@ -34,7 +34,7 @@ TYPED_TEST(LayerFactoryTest, TestCreateLayer) {
 #ifdef USE_LEVELDB
       string tmp;
       MakeTempDir(&tmp);
-      boost::scoped_ptr<db::DB> db(db::GetDB(DataParameter_DB_LEVELDB));
+      std::unique_ptr<db::DB> db(db::GetDB(DataParameter_DB_LEVELDB));
       db->Open(tmp, db::NEW);
       db->Close();
       layer_param.mutable_data_param()->set_source(tmp);

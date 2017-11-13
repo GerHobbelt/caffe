@@ -4,17 +4,13 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/layer_factory.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/math_functions.hpp"
-
-/**
- Forward declare boost::mutex instead of including boost/mutex.hpp
- */
-namespace boost { class mutex; }
 
 namespace caffe {
 

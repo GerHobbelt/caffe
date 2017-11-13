@@ -9,7 +9,8 @@
 #include <fstream>  // NOLINT(readability/streams)
 #include <string>
 
-#include "boost/scoped_ptr.hpp"
+#include <memory>
+
 #include "glog/logging.h"
 #include "google/protobuf/text_format.h"
 #include "stdint.h"
@@ -19,7 +20,7 @@
 #include "caffe/util/format.hpp"
 
 using caffe::Datum;
-using boost::scoped_ptr;
+using std::unique_ptr;
 using std::string;
 namespace db = caffe::db;
 
@@ -38,9 +39,9 @@ void read_image(std::ifstream* file, int* label, char* buffer) {
 
 void convert_dataset(const string& input_folder, const string& output_folder,
     const string& db_type) {
-  scoped_ptr<db::DB> train_db(db::GetDB(db_type));
+  unique_ptr<db::DB> train_db(db::GetDB(db_type));
   train_db->Open(output_folder + "/cifar10_train_" + db_type, db::NEW);
-  scoped_ptr<db::Transaction> txn(train_db->NewTransaction());
+  unique_ptr<db::Transaction> txn(train_db->NewTransaction());
   // Data buffer
   int label;
   char str_buffer[kCIFARImageNBytes];
@@ -71,7 +72,7 @@ void convert_dataset(const string& input_folder, const string& output_folder,
   train_db->Close();
 
   LOG(INFO) << "Writing Testing data";
-  scoped_ptr<db::DB> test_db(db::GetDB(db_type));
+  unique_ptr<db::DB> test_db(db::GetDB(db_type));
   test_db->Open(output_folder + "/cifar10_test_" + db_type, db::NEW);
   txn.reset(test_db->NewTransaction());
   // Open files
