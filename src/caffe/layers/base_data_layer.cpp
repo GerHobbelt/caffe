@@ -46,7 +46,7 @@ BasePrefetchingDataLayer<Dtype>::BasePrefetchingDataLayer(
 
 
 template <typename Dtype>
-BasePrefetchingDataLayer<Dtype>::~BasePrefetchingDataLayer() {
+void BasePrefetchingDataLayer<Dtype>::StopPrefetching() {
   prefetch_free_.abort();
   prefetch_full_.abort();
 

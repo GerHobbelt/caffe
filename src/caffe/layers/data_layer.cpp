@@ -21,6 +21,12 @@ DataLayer<Dtype>::DataLayer(const LayerParameter& param)
 }
 
 template <typename Dtype>
+DataLayer<Dtype>::~DataLayer()
+{
+  this->StopPrefetching();
+}
+
+template <typename Dtype>
 void DataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   const int batch_size = this->layer_param_.data_param().batch_size();

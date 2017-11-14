@@ -54,7 +54,6 @@ class BasePrefetchingDataLayer :
     public BaseDataLayer<Dtype>, public InternalThread {
  public:
   explicit BasePrefetchingDataLayer(const LayerParameter& param);
-  virtual ~BasePrefetchingDataLayer();
   // LayerSetUp: implements common data layer setup functionality, and calls
   // DataLayerSetUp to do special data layer setup for individual layer types.
   // This method may not be overridden.
@@ -69,6 +68,7 @@ class BasePrefetchingDataLayer :
  protected:
   virtual void InternalThreadEntry();
   virtual void load_batch(Batch<Dtype>* batch) = 0;
+  void StopPrefetching();
 
   vector<shared_ptr<Batch<Dtype> > > prefetch_;
   BlockingQueue<Batch<Dtype>*> prefetch_free_;
