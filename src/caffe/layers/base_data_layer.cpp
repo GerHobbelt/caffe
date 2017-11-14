@@ -44,6 +44,15 @@ BasePrefetchingDataLayer<Dtype>::BasePrefetchingDataLayer(
   }
 }
 
+
+template <typename Dtype>
+BasePrefetchingDataLayer<Dtype>::~BasePrefetchingDataLayer() {
+  prefetch_free_.abort();
+  prefetch_full_.abort();
+
+  this->StopInternalThread();
+}
+
 template <typename Dtype>
 void BasePrefetchingDataLayer<Dtype>::LayerSetUp(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {

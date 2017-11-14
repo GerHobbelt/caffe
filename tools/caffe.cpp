@@ -12,6 +12,7 @@ namespace bp = boost::python;
 #include <vector>
 
 #include "boost/algorithm/string.hpp"
+#include "boost/lexical_cast.hpp"
 #include "caffe/caffe.hpp"
 #include "caffe/util/signal_handler.h"
 

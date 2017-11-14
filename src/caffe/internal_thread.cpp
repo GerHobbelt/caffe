@@ -52,7 +52,10 @@ void InternalThread::entry(int device, Caffe::Brew mode, int rand_seed,
   Caffe::set_solver_rank(solver_rank);
   Caffe::set_multiprocess(multiprocess);
 
-  InternalThreadEntry();
+  try{
+    InternalThreadEntry();
+  } catch (operation_aborted& e) {
+  }
 }
 
 void InternalThread::StopInternalThread() {

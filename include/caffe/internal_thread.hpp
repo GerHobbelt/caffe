@@ -1,14 +1,12 @@
 #ifndef CAFFE_INTERNAL_THREAD_HPP_
 #define CAFFE_INTERNAL_THREAD_HPP_
 
+#include <thread>
 #include "caffe/common.hpp"
 
-/**
- Forward declare std::thread instead of including <thread>
- */
-namespace std { class thread; }
-
 namespace caffe {
+
+struct operation_aborted {};
 
 /**
  * Virtual class encapsulate boost::thread for use in base class

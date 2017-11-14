@@ -10,6 +10,7 @@ namespace caffe {
 
 template<typename T>
 BlockingQueue<T>::BlockingQueue() {
+  abort_ = false;
 }
 
 template<typename T>
@@ -38,11 +39,15 @@ template<typename T>
 T BlockingQueue<T>::pop(const string& log_on_wait) {
   std::unique_lock<std::mutex> lock(mutex_);
 
-  while (queue_.empty()) {
+  while (queue_.empty() && !abort_) {
     if (!log_on_wait.empty()) {
       LOG_EVERY_N(INFO, 1000)<< log_on_wait;
     }
     condition_.wait(lock);
+  }
+
+  if (abort_) {
+    if (abort_) throw operation_aborted();
   }
 
   T t = queue_.front();
@@ -66,8 +71,12 @@ template<typename T>
 T BlockingQueue<T>::peek() {
   std::unique_lock<std::mutex> lock(mutex_);
 
-  while (queue_.empty()) {
+  while (queue_.empty() && !abort_) {
     condition_.wait(lock);
+  }
+
+  if (abort_) {
+    if (abort_) throw operation_aborted();
   }
 
   return queue_.front();
@@ -79,6 +88,13 @@ size_t BlockingQueue<T>::size() const {
   return queue_.size();
 }
 
+
+template<typename T>
+void BlockingQueue<T>::abort() {
+  std::unique_lock<std::mutex> lock(mutex_);
+  abort_ = true;
+  condition_.notify_all();
+}
 template class BlockingQueue<Batch<float>*>;
 template class BlockingQueue<Batch<double>*>;
 

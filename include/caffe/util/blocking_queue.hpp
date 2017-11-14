@@ -28,11 +28,15 @@ class BlockingQueue {
 
   size_t size() const;
 
+  void abort();
+
  protected:
   mutable std::mutex mutex_;
   std::condition_variable condition_;
 
   std::queue<T> queue_;
+
+  bool abort_;
 
 DISABLE_COPY_AND_ASSIGN(BlockingQueue);
 };
