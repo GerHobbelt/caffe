@@ -1,10 +1,16 @@
 #ifndef CAFFE_UTIL_IO_H_
 #define CAFFE_UTIL_IO_H_
 
-#include <boost/filesystem.hpp>
 #include <iomanip>
+#include <cstdio>
 #include <iostream>  // NOLINT(readability/streams)
 #include <string>
+#if defined _MSC_VER
+#include <direct.h>
+#elif defined __GNUC__
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
 
 #include "google/protobuf/message.h"
 
@@ -19,17 +25,19 @@
 namespace caffe {
 
 using ::google::protobuf::Message;
-using ::boost::filesystem::path;
 
 inline void MakeTempDir(string* temp_dirname) {
   temp_dirname->clear();
-  const path& model =
-    boost::filesystem::temp_directory_path()/"caffe_test.%%%%-%%%%";
   for ( int i = 0; i < CAFFE_TMP_DIR_RETRIES; i++ ) {
-    const path& dir = boost::filesystem::unique_path(model).string();
-    bool done = boost::filesystem::create_directory(dir);
-    if ( done ) {
-      *temp_dirname = dir.string();
+    const std::string dir = tmpnam(nullptr);
+    int ret;
+#if defined _MSC_VER
+    ret = _mkdir(dir.data());
+#elif defined __GNUC__
+    ret = mkdir(dir.data(), 0777);
+#endif
+    if (ret == 0) {
+      *temp_dirname = dir;
       return;
     }
   }
@@ -37,16 +45,8 @@ inline void MakeTempDir(string* temp_dirname) {
 }
 
 inline void MakeTempFilename(string* temp_filename) {
-  static path temp_files_subpath;
-  static uint64_t next_temp_file = 0;
-  temp_filename->clear();
-  if ( temp_files_subpath.empty() ) {
-    string path_string="";
-    MakeTempDir(&path_string);
-    temp_files_subpath = path_string;
-  }
-  *temp_filename =
-    (temp_files_subpath/caffe::format_int(next_temp_file++, 9)).string();
+  std::string path = tmpnam(nullptr);
+  *temp_filename = path;
 }
 
 bool ReadProtoFromTextFile(const char* filename, Message* proto);
