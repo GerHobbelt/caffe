@@ -98,7 +98,7 @@ float Timer::MilliSeconds() {
 #endif
   } else {
     auto t = stop_cpu_ - start_cpu_;
-    elapsed_microseconds_ = std::chrono::duration_cast<std::chrono::milliseconds>(t).count();
+    elapsed_milliseconds_ = std::chrono::duration_cast<std::chrono::milliseconds>(t).count();
   }
   return elapsed_milliseconds_;
 }
