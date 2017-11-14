@@ -63,6 +63,25 @@ class GPUParams : public Params<Dtype> {
   using Params<Dtype>::diff_;
 };
 
+class barrier
+{
+private:
+    std::mutex _mutex;
+    std::condition_variable _cv;
+    std::size_t _count;
+public:
+    explicit Barrier(std::size_t count) : _count{count} { }
+    void Wait()
+    {
+        std::unique_lock<std::mutex> lock{_mutex};
+        if (--_count == 0) {
+            _cv.notify_all();
+        } else {
+            _cv.wait(lock, [this] { return _count == 0; });
+        }
+    }
+};
+
 template<typename Dtype>
 class NCCL : public GPUParams<Dtype>,
              public Solver<Dtype>::Callback,
@@ -78,6 +97,9 @@ class NCCL : public GPUParams<Dtype>,
    */
   NCCL(shared_ptr<Solver<Dtype> > solver, const string& uid);
   ~NCCL();
+
+  barrier* barrier();
+  void set_barrier(barrier* value);
 
   /**
    * In single process settings, create instances without uids and
@@ -107,6 +129,8 @@ class NCCL : public GPUParams<Dtype>,
   cudaStream_t stream_;
 
   shared_ptr<Solver<Dtype> > solver_;
+  // Should not be necessary, https://github.com/NVIDIA/nccl/issues/37
+  barrier* barrier_;
   using Params<Dtype>::size_;
   using Params<Dtype>::data_;
   using Params<Dtype>::diff_;
