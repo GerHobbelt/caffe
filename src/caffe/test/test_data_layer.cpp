@@ -1,7 +1,7 @@
 #ifdef USE_OPENCV
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "gtest/gtest.h"
 

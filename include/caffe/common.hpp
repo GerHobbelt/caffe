@@ -5,11 +5,11 @@
 #include <glog/logging.h>
 
 #include <climits>
-#include <memory>
 #include <cmath>
 #include <fstream>  // NOLINT(readability/streams)
 #include <iostream>  // NOLINT(readability/streams)
 #include <map>
+#include <memory>
 #include <set>
 #include <sstream>
 #include <string>

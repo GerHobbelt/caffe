@@ -21,8 +21,7 @@ DataLayer<Dtype>::DataLayer(const LayerParameter& param)
 }
 
 template <typename Dtype>
-DataLayer<Dtype>::~DataLayer()
-{
+DataLayer<Dtype>::~DataLayer() {
   this->StopPrefetching();
 }
 

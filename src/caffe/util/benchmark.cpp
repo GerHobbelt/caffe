@@ -75,7 +75,8 @@ float Timer::MicroSeconds() {
 #endif
   } else {
     auto t = stop_cpu_ - start_cpu_;
-    elapsed_microseconds_ = std::chrono::duration_cast<std::chrono::microseconds>(t).count();
+    elapsed_microseconds_ =
+      std::chrono::duration_cast<std::chrono::microseconds>(t).count();
   }
   return elapsed_microseconds_;
 }
@@ -98,7 +99,8 @@ float Timer::MilliSeconds() {
 #endif
   } else {
     auto t = stop_cpu_ - start_cpu_;
-    elapsed_milliseconds_ = std::chrono::duration_cast<std::chrono::milliseconds>(t).count();
+    elapsed_milliseconds_ =
+      std::chrono::duration_cast<std::chrono::milliseconds>(t).count();
   }
   return elapsed_milliseconds_;
 }
@@ -151,7 +153,8 @@ float CPUTimer::MilliSeconds() {
     Stop();
   }
   auto t = this->stop_cpu_ - this->start_cpu_;
-  this->elapsed_milliseconds_ = std::chrono::duration_cast<std::chrono::milliseconds>(t).count();
+  this->elapsed_milliseconds_ =
+    std::chrono::duration_cast<std::chrono::milliseconds>(t).count();
   return this->elapsed_milliseconds_;
 }
 
@@ -164,7 +167,8 @@ float CPUTimer::MicroSeconds() {
     Stop();
   }
   auto t = this->stop_cpu_ - this->start_cpu_;
-  this->elapsed_microseconds_ = std::chrono::duration_cast<std::chrono::microseconds>(t).count();
+  this->elapsed_microseconds_ =
+    std::chrono::duration_cast<std::chrono::microseconds>(t).count();
   return this->elapsed_microseconds_;
 }
 

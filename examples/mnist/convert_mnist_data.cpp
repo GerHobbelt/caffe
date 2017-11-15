@@ -19,8 +19,8 @@
 #include <stdint.h>
 #include <sys/stat.h>
 
-#include <memory>
 #include <fstream>  // NOLINT(readability/streams)
+#include <memory>
 #include <string>
 
 #include "caffe/proto/caffe.pb.h"

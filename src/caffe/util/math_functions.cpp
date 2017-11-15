@@ -1,7 +1,7 @@
-#include <random>
-#include <memory>
 #include <functional>
 #include <limits>
+#include <memory>
+#include <random>
 
 #include "caffe/common.hpp"
 #include "caffe/util/math_functions.hpp"
@@ -257,7 +257,8 @@ void caffe_rng_uniform(const int n, const Dtype a, const Dtype b, Dtype* r) {
   CHECK_GE(n, 0);
   CHECK(r);
   CHECK_LE(a, b);
-  std::uniform_real_distribution<Dtype> random_distribution(a, caffe::nextafter(b));
+  std::uniform_real_distribution<Dtype> random_distribution(
+    a, caffe::nextafter(b));
   auto rng = caffe_rng();
   for (int i = 0; i < n; ++i) {
     r[i] = random_distribution(*rng);

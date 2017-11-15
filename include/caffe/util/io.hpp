@@ -1,16 +1,17 @@
 #ifndef CAFFE_UTIL_IO_H_
 #define CAFFE_UTIL_IO_H_
 
-#include <iomanip>
-#include <cstdio>
-#include <iostream>  // NOLINT(readability/streams)
-#include <string>
 #if defined _MSC_VER
 #include <direct.h>
 #elif defined __GNUC__
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #endif
+
+#include <cstdio>
+#include <iomanip>
+#include <iostream>  // NOLINT(readability/streams)
+#include <string>
 
 #include "google/protobuf/message.h"
 

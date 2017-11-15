@@ -2,9 +2,9 @@
 #define CAFFE_LAYER_H_
 
 #include <algorithm>
+#include <mutex>
 #include <string>
 #include <vector>
-#include <mutex>
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"

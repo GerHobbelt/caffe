@@ -1,10 +1,10 @@
 #ifndef CAFFE_UTIL_BLOCKING_QUEUE_HPP_
 #define CAFFE_UTIL_BLOCKING_QUEUE_HPP_
 
+#include <condition_variable>
+#include <mutex>
 #include <queue>
 #include <string>
-#include <mutex>
-#include <condition_variable>
 
 namespace caffe {
 

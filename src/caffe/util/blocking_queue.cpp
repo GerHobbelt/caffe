@@ -1,6 +1,6 @@
-#include <thread>
 #include <mutex>
 #include <string>
+#include <thread>
 
 #include "caffe/layers/base_data_layer.hpp"
 #include "caffe/parallel.hpp"
@@ -18,7 +18,7 @@ void BlockingQueue<T>::push(const T& t) {
   {
     std::unique_lock<std::mutex> lock(mutex_);
     queue_.push(t);
-  }  
+  }
   condition_.notify_one();
 }
 

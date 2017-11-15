@@ -1,8 +1,9 @@
-#include <functional>
 #include <glog/logging.h>
 
 #include <signal.h>
+
 #include <csignal>
+#include <functional>
 
 #include "caffe/util/signal_handler.h"
 

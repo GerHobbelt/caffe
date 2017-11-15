@@ -1,6 +1,6 @@
 #if defined(USE_LEVELDB) && defined(USE_LMDB) && defined(USE_OPENCV)
-#include <string>
 #include <memory>
+#include <string>
 
 #include "gtest/gtest.h"
 
