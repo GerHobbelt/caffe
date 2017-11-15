@@ -22,13 +22,13 @@ TEST_F(InternalThreadTest, TestStartAndExit) {
 
 class TestThreadA : public InternalThread {
   void InternalThreadEntry() {
-    EXPECT_EQ(4244559767, caffe_rng_rand());
+    EXPECT_EQ(2682223724, caffe_rng_rand());
   }
 };
 
 class TestThreadB : public InternalThread {
   void InternalThreadEntry() {
-    EXPECT_EQ(1726478280, caffe_rng_rand());
+    EXPECT_EQ(231000038, caffe_rng_rand());
   }
 };
 
