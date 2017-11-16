@@ -10,10 +10,15 @@
 #include "caffe/common.hpp"
 #include "caffe/parallel.hpp"
 #include "caffe/proto/caffe.pb.h"
-#include "caffe/sgd_solvers.hpp"
 #include "caffe/util/io.hpp"
 
 #include "caffe/test/test_caffe_main.hpp"
+#include "../solvers/sgd_solver.hpp"
+#include "../solvers/adam_solver.hpp"
+#include "../solvers/adadelta_solver.hpp"
+#include "../solvers/adagrad_solver.hpp"
+#include "../solvers/nesterov_solver.hpp"
+#include "../solvers/rmsprop_solver.hpp"
 
 using std::ostringstream;
 

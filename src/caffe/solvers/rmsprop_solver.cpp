@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "caffe/sgd_solvers.hpp"
+#include "rmsprop_solver.hpp"
 
 namespace caffe {
 

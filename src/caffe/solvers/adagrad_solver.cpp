@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "caffe/sgd_solvers.hpp"
+#include "adagrad_solver.hpp"
 
 namespace caffe {
 
