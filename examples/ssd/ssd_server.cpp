@@ -29,9 +29,12 @@
 #include <boost/bind.hpp>
 #include <boost/smart_ptr.hpp>
 #include <boost/asio.hpp>
+#include <boost/thread.hpp>
 
 #ifdef USE_OPENCV
 using namespace caffe;  // NOLINT(build/namespaces)
+
+
 
 class Detector {
  public:
@@ -236,6 +239,165 @@ void Detector::Preprocess(const cv::Mat& img,
 using boost::asio::ip::tcp;
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 
+class SimpleTCPServer {
+  public:
+   SimpleTCPServer(const string &address, const string& port);
+   bool read(uint8_t *buffer, size_t length);
+   bool write(uint8_t *buffer, size_t length);
+
+  private:
+    void listenerThread();
+    volatile bool talkerStarted;
+    volatile size_t readBytes;
+    volatile uint8_t * readBuffer;
+    volatile size_t writeBytes;
+    volatile uint8_t * writeBuffer;
+    void talkerThread();
+    boost::mutex readReadyMutex;
+    boost::mutex writeReadyMutex;
+    boost::mutex threadReadyMutex;
+    boost::condition_variable_any readReady;
+    boost::condition_variable_any writeReady;
+    boost::condition_variable_any threadReady;
+    boost::thread *listener;
+    std::vector<boost::thread *> talkers;
+    std::vector<socket_ptr> sockets;
+    socket_ptr current_socket;
+    string myaddress;
+    string myport;
+    
+};
+
+
+
+SimpleTCPServer::SimpleTCPServer(const string &address, const string& port)
+{
+  myaddress=address;
+  myport=port;
+  listener=new boost::thread(boost::bind(&SimpleTCPServer::listenerThread,this));
+  readReadyMutex.lock();
+  writeReadyMutex.lock();
+}
+
+bool SimpleTCPServer::read(uint8_t *buffer, size_t length)
+{
+   // tell tcp talkers how much we want read and wait for someone to fulfill our request
+   readBuffer=(volatile uint8_t*)buffer;
+   readBytes=length;
+   while(readBytes!=0) {
+      readReady.notify_one();
+      readReady.wait(readReadyMutex);
+   }
+   return true;
+}
+
+bool SimpleTCPServer::write(uint8_t *buffer, size_t length)
+{
+   // tell tcp talkers how much we want written and wait for someone to fulfill our request
+   writeBuffer=(volatile uint8_t*)buffer;
+   writeBytes=length;
+   while(writeBytes!=0) {
+      writeReady.notify_one();
+      writeReady.wait(writeReadyMutex);
+   }
+   return true;
+}
+
+
+void SimpleTCPServer::listenerThread()
+{
+  boost::unique_lock<boost::mutex> lock(threadReadyMutex);
+  // Open port
+  boost::asio::io_service io_service;
+  try {
+     tcp::resolver resolver(io_service);
+     tcp::acceptor acceptor(io_service, tcp::endpoint(*tcp::resolver(io_service).resolve(tcp::resolver::query(myaddress,myport))));
+     while (true) {
+       socket_ptr sock(new tcp::socket(io_service));
+       
+       acceptor.accept(*sock);
+       talkerStarted=false;
+       current_socket=sock;
+       sockets.push_back(sock);
+       talkers.push_back(new boost::thread(boost::bind(&SimpleTCPServer::talkerThread,this)));
+       
+       while(!talkerStarted) {
+          threadReady.wait(threadReadyMutex);
+       }
+     }
+  } catch (std::exception& e) {
+     std::cerr << "Exception: " << e.what() << "\n";
+     exit(-1);
+  }
+}
+
+
+void SimpleTCPServer::talkerThread() {
+     socket_ptr mysocket;
+     {
+        boost::unique_lock<boost::mutex> lock(threadReadyMutex);
+        mysocket=current_socket;
+        talkerStarted=true;
+        threadReady.notify_all();
+     } // will remove the lock
+
+     while (true) {
+        
+	{
+		// we only do want to make ourselves available if there actually is data to be read
+		uint8_t minibuffer[1];
+		// do a blocking read
+		try {
+		   boost::asio::read(*mysocket,boost::asio::buffer(&minibuffer[0],1));
+		} catch (std::exception& e) {
+		}
+		// now we know data is coming in, we can do an actual read, signal readyness
+		
+		boost::unique_lock<boost::mutex> readlock(readReadyMutex);
+		while (readBytes==0) {
+		   readReady.wait(readReadyMutex);
+		}
+		uint8_t * rb=(uint8_t*)(readBuffer+1);
+		size_t length = readBytes-1;
+		readBuffer[0]=minibuffer[0]; // copy the canary which has already been read over
+
+		try {
+		   boost::asio::read(*mysocket,boost::asio::buffer(rb,length));
+		} catch (std::exception& e) {
+		   mysocket->close();
+		   while (true) {
+		      readReady.wait(readReadyMutex);
+		   }
+		   // since read has not been acknowledged, another thread now can
+		}
+		//acknowledge succesful read
+		readBytes=0;
+                readReady.notify_all();
+	}
+	{
+		boost::unique_lock<boost::mutex> writelock(writeReadyMutex);
+		// after a read always a write follows
+		while(writeBytes==0) {
+		      readReady.wait(readReadyMutex);
+		}
+
+		uint8_t * wb=(uint8_t*)writeBuffer;
+		size_t length = writeBytes;
+		writeBytes=0; //acknowledge in all cases, since no other thread could do the write for us.
+		try {
+		   boost::asio::write(*mysocket,boost::asio::buffer(wb,length));
+		} catch (std::exception& e) {
+		   mysocket->close();
+		   writeReady.notify_all();
+		   while (true) {
+		      writeReady.wait(writeReadyMutex);
+		   }
+		}
+		writeReady.notify_all();
+	}
+     }
+}
+
 
 typedef struct __attribute__ ((__packed__)) {
 	uint8_t label;
@@ -253,15 +415,6 @@ typedef struct __attribute__ ((__packed__)) {
 
 #define IMAGESIZE 300
 #define BUFFERLENGTH (IMAGESIZE*IMAGESIZE*3)
-
-void session(boost::shared_ptr<tcp::socket> socket)
-{
-    while (true)
-    {
-        
-    }
-}
-
 
 DEFINE_string(mean_file, "",
     "The mean file used to subtract from the input image.");
@@ -307,18 +460,6 @@ int main(int argc, char** argv) {
   const float confidence_threshold = FLAGS_confidence_threshold;
   uint8_t inputBuffer[BUFFERLENGTH];
 
-  // Open port
-  boost::asio::io_service io_service;
-  socket_ptr sock(new tcp::socket(io_service));
-  try {
-     tcp::resolver resolver(io_service);
-     tcp::acceptor acceptor(io_service, tcp::endpoint(*tcp::resolver(io_service).resolve(tcp::resolver::query(address,port))));
-     acceptor.accept(*sock);
-  } catch (std::exception& e) {
-     std::cerr << "Exception: " << e.what() << "\n";
-     exit(-1);
-  }
-
   // Initialize the network.
   Detector detector(model_file, weights_file, mean_file, mean_value);
 
@@ -336,7 +477,8 @@ int main(int argc, char** argv) {
   // Process image one by one.
   std::ifstream infile(argv[3]);
   std::string file;
-  while ( boost::asio::read(*sock,boost::asio::buffer(&inputBuffer,BUFFERLENGTH))) {
+  SimpleTCPServer server(address,port);
+  while (server.read(inputBuffer,(size_t)BUFFERLENGTH)) {
       const int sizes[2]={IMAGESIZE,IMAGESIZE};
       cv::Mat img = cv::Mat(2,sizes,CV_8UC3,(void*)inputBuffer);
       std::vector<vector<float> > detections = detector.Detect(img);
@@ -368,7 +510,7 @@ int main(int argc, char** argv) {
       }
       results->count = num_detections;
       size_t resultsize = offsetof(detection_results,detection[0])+num_detections*sizeof(detection_info);
-      boost::asio::write(*sock,boost::asio::buffer(&inputBuffer,resultsize));
+      server.write(inputBuffer,(size_t)resultsize);
       out << "wrote " << num_detections << " detections in " << resultsize << " bytes" << std::endl;
   }
   return 0;
