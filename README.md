@@ -7,7 +7,7 @@ Aircap is a research project by the Max Planck Institute for Intelligent Systems
 
 We are using SSD Multibox on board our unmanned aerial vehicles
 
-Our only contribution is a new executable: examples/ssd/ssd_server.cpp
+Our contribution is a new executable: examples/ssd/ssd_server.cpp
 This executable will listen for TCP connections, analyze a OpenCV mat() sent
 over the stream and send the result back.  This allows integration of
 SSDMultibox in a modular environment. In our case the SSD server is queried
