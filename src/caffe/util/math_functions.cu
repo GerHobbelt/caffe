@@ -1,4 +1,5 @@
-#include <math_functions.h>  // CUDA's, not caffe's, for fabs, signbit
+//#include <math_functions.h> //In older CUDA's, you may have to replace cuda_runtime.h with this
+#include <cuda_runtime.h> // CUDA's, not caffe's, for fabs, signbit
 #include <thrust/device_vector.h>
 #include <thrust/functional.h>  // thrust::plus
 #include <thrust/reduce.h>
