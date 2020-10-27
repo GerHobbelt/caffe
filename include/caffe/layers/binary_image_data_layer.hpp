@@ -20,7 +20,6 @@ namespace caffe
 
         ~BinaryData()
         {
-            std::cout << "WARNING: DELETING DATA !!!" << std::endl;
             delete[] input_;
             delete[] label_;
         }
