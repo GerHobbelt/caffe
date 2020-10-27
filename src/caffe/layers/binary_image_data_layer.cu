@@ -20,13 +20,16 @@ void BinaryImageDataLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom
     {
         if (current_row_ == data_.size())
         {
-            std::random_shuffle(data_.begin(), data_.end());
+            std::random_shuffle(data_permutation_.begin(), data_permutation_.end());
             current_row_ = 0;
         }
 
         int size = width_in_ * height_in_;
-        caffe_copy<Dtype>(size, data_[current_row_]->GetInput(), &top[0]->mutable_gpu_data()[i * size]);
-        caffe_copy<Dtype>(size, data_[current_row_]->GetLabel(), &top[1]->mutable_gpu_data()[i * size]);
+        caffe_copy<Dtype>(size, data_[data_permutation_[current_row_]]->GetInput(), 
+          &top[0]->mutable_gpu_data()[i * size]);
+        size = width_out_ * height_out_;
+        caffe_copy<Dtype>(size, data_[data_permutation_[current_row_]]->GetLabel(), 
+          &top[1]->mutable_gpu_data()[i * size]);
 
         ++current_row_;
     }
