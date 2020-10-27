@@ -20,6 +20,12 @@ namespace caffe
         {
         }
 
+        ~BinaryData()
+        {
+            delete[] input_;
+            delete[] label_;
+        }
+
         const Dtype *GetInput() const { return input_; }
         const Dtype *GetLabel() const { return label_; }
 

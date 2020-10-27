@@ -59,20 +59,18 @@ namespace caffe
         // Reshape blobs.
         const int batch_size = this->layer_param_.hdf5_data_param().batch_size();
 
-        vector<int> top_shape(5);
+        vector<int> top_shape(4);
         top_shape[0] = batch_size;
         top_shape[1] = 1;
-        top_shape[2] = 1;
-        top_shape[3] = height_in_;
-        top_shape[4] = width_in_;
+        top_shape[2] = height_in_;
+        top_shape[3] = width_in_;
 
         top[0]->Reshape(top_shape);
 
         top_shape[0] = batch_size;
         top_shape[1] = 1;
-        top_shape[2] = 1;
-        top_shape[3] = height_out_;
-        top_shape[4] = width_out_;
+        top_shape[2] = height_out_;
+        top_shape[3] = width_out_;
 
         top[1]->Reshape(top_shape);
     }
