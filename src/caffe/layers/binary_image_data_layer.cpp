@@ -21,6 +21,8 @@ namespace caffe
     template <typename Dtype>
     BinaryImageDataLayer<Dtype>::~BinaryImageDataLayer<Dtype>()
     {
+        for (int i = 0; i < data_.size(); ++i)
+            delete data_[i];
     }
 
     template <typename Dtype>
@@ -46,6 +48,7 @@ namespace caffe
 
         // Read until the end
         int count = 0;
+        data_.resize(length);
         while (!stream.eof() && !stream.bad() && !stream.fail() && count < length)
         {
             Dtype* data = new Dtype[width_in_ * height_in_];
@@ -53,7 +56,7 @@ namespace caffe
             Dtype* label = new Dtype[width_out_ * height_out_];
             stream.read(reinterpret_cast<char*>(label), width_out_ * height_out_ * sizeof(Dtype));
 
-            data_.emplace_back(std::make_shared<BinaryData<Dtype>>(data, label));
+            data_[count] = new BinaryData<Dtype>(data, label);
             count++;
         }
 

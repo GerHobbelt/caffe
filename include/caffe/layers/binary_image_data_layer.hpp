@@ -64,7 +64,7 @@ namespace caffe
         }
 
         size_t current_row_;
-        std::vector<std::shared_ptr<BinaryData<Dtype>>> data_;
+        std::vector<BinaryData<Dtype>*> data_;
         int width_in_;
         int width_out_;
         int height_in_;
