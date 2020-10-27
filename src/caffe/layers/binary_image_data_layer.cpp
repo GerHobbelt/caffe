@@ -98,10 +98,10 @@ namespace caffe
             }
 
             int size = width_in_ * height_in_;
-            caffe_copy<Dtype>(size, data_[data_permutation_[current_row_]]->GetInput(),
+            caffe_copy<Dtype>(size, &data_[data_permutation_[current_row_]]->GetInput()[0],
                               &top[0]->mutable_cpu_data()[i * size]);
             size = width_out_ * height_out_;
-            caffe_copy<Dtype>(size, data_[data_permutation_[current_row_]]->GetLabel(),
+            caffe_copy<Dtype>(size, &data_[data_permutation_[current_row_]]->GetLabel()[0],
                               &top[1]->mutable_cpu_data()[i * size]);
 
             ++current_row_;
