@@ -40,8 +40,12 @@ namespace caffe
         stream.read(reinterpret_cast<char *>(&width_out_), sizeof(int));
         stream.read(reinterpret_cast<char *>(&height_out_), sizeof(int));
 
+        int length;
+        stream.read(reinterpret_cast<char *>(&length), sizeof(int));
+
         // Read until the end
-        while (!stream.eof() && !stream.bad() && !stream.fail())
+        int count = 0;
+        while (!stream.eof() && !stream.bad() && !stream.fail() && count < length)
         {
             Dtype *data = new Dtype[width_in_ * height_in_];
             stream.read(reinterpret_cast<char *>(data), width_in_ * height_in_ * sizeof(Dtype));
@@ -49,6 +53,7 @@ namespace caffe
             stream.read(reinterpret_cast<char *>(label), width_out_ * height_out_ * sizeof(Dtype));
 
             data_.emplace_back(std::make_shared<BinaryData<Dtype>>(data, label));
+            count++;
         }
 
         // Reshape blobs.
