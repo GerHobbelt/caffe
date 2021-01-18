@@ -6,9 +6,14 @@ pci_configs="0,5 0,5,2,7 0,5,2,4,3,6"
 nets="bvlc_alexnet  bvlc_googlenet  bvlc_reference_caffenet  inception-v3 resnet-50  vgg-16"
 
 caffe_run() {
+  # net solver num cfg outfile
   echo "Running $1 $2 $3 $4" >> $5 2>&1
-  time ./build/tools/caffe train --solver=$2 --gpu $4 >> $5 2>&1
+  (time ./build/tools/caffe train --solver=$2 --gpu $4) >> $5 2>&1
 }
+
+#solver="caffe-models/bvlc_alexnet/solver.prototxt"
+#./mod_solver.sh 100 $solver
+#caffe_run bvlc_alexnet $solver 100 0,1 test.log
 
 num=100
 inc=100
