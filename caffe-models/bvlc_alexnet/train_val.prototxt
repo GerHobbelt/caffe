@@ -10,7 +10,7 @@ layer {
   transform_param {
     mirror: true
     crop_size: 227
-    mean_file: "data/ilsvrc12/imagenet_mean.binaryproto"
+    mean_file: "/home/rang093/raid/imagenet/imagenet_mean.binaryproto"
   }
   data_param {
     source: "examples/imagenet/ilsvrc12_train_lmdb"
@@ -29,7 +29,7 @@ layer {
   transform_param {
     mirror: false
     crop_size: 227
-    mean_file: "data/ilsvrc12/imagenet_mean.binaryproto"
+    mean_file: "/home/rang093/raid/imagenet/imagenet_mean.binaryproto"
   }
   data_param {
     source: "examples/imagenet/ilsvrc12_val_lmdb"

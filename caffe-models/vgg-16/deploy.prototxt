@@ -14,7 +14,7 @@ layer {
     new_width: 224
   }
   transform_param {
-    mean_file: "data/ilsvrc12/imagenet_mean.binaryproto"
+    mean_file: "/home/rang093/raid/imagenet/imagenet_mean.binaryproto"
   }
   input_param {
     shape {
