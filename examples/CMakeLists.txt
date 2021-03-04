@@ -10,6 +10,12 @@ foreach(source_file ${examples_srcs})
     
   add_executable(${name} ${source_file})
   target_link_libraries(${name} ${Caffe_LINK})
+
+  if(ANDROID)
+    find_library(android-log log)
+    target_link_libraries(${name} ${android-log})
+  endif()
+
   caffe_default_properties(${name})
 
   # set back RUNTIME_OUTPUT_DIRECTORY
