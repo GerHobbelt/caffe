@@ -23,6 +23,12 @@ endif()
 add_library(caffe ${srcs})
 caffe_default_properties(caffe)
 target_link_libraries(caffe ${Caffe_LINKER_LIBS})
+
+if(ANDROID)
+  find_library(android-log log)
+  target_link_libraries(caffe ${android-log})
+endif()
+  
 target_include_directories(caffe ${Caffe_INCLUDE_DIRS}
                                  PUBLIC
                                  $<BUILD_INTERFACE:${Caffe_INCLUDE_DIR}>
