@@ -13,6 +13,16 @@
 #include "caffe/layers/video_data_layer.hpp"
 #include "caffe/util/benchmark.hpp"
 
+// add a header file
+#include <opencv2/videoio.hpp>
+ // add cv namespace
+using namespace cv;
+ // remove CV_CAP_PROP_FRAME_COUNT, the foregoing CV_CAP_PROP_POS_FRAMES CV_
+ // However, the proposal is still macro defined in the header:
+#define CV_CAP_PROP_FRAME_COUNT CAP_PROP_FRAME_COUNT
+#define CV_CAP_PROP_POS_FRAMES   CAP_PROP_POS_FRAMES
+
+
 namespace caffe {
 
 template <typename Dtype>
