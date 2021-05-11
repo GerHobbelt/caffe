@@ -244,7 +244,28 @@ function(detect_cuDNN)
            CUDNN_VERSION_PATCH "${CUDNN_VERSION_PATCH}")
 
     if (NOT CUDNN_VERSION_MAJOR)
-      set(CUDNN_VERSION "???")
+        # patch for cudnn >= 8.0.0
+        file(READ ${CUDNN_INCLUDE}/cudnn_version.h CUDNN_VERSION_FILE_CONTENTS)
+
+        # cuDNN v3 and beyond
+        string(REGEX MATCH "define CUDNN_MAJOR * +([0-9]+)"
+               CUDNN_VERSION_MAJOR "${CUDNN_VERSION_FILE_CONTENTS}")
+        string(REGEX REPLACE "define CUDNN_MAJOR * +([0-9]+)" "\\1"
+               CUDNN_VERSION_MAJOR "${CUDNN_VERSION_MAJOR}")
+        string(REGEX MATCH "define CUDNN_MINOR * +([0-9]+)"
+               CUDNN_VERSION_MINOR "${CUDNN_VERSION_FILE_CONTENTS}")
+        string(REGEX REPLACE "define CUDNN_MINOR * +([0-9]+)" "\\1"
+               CUDNN_VERSION_MINOR "${CUDNN_VERSION_MINOR}")
+        string(REGEX MATCH "define CUDNN_PATCHLEVEL * +([0-9]+)"
+               CUDNN_VERSION_PATCH "${CUDNN_VERSION_FILE_CONTENTS}")
+        string(REGEX REPLACE "define CUDNN_PATCHLEVEL * +([0-9]+)" "\\1"
+               CUDNN_VERSION_PATCH "${CUDNN_VERSION_PATCH}")
+
+        if (NOT CUDNN_VERSION_MAJOR)
+	    set(CUDNN_VERSION "???")
+        else ()
+	    set(CUDNN_VERSION "${CUDNN_VERSION_MAJOR}.${CUDNN_VERSION_MINOR}.${CUDNN_VERSION_PATCH}")
+        endif()
     else ()
       set(CUDNN_VERSION "${CUDNN_VERSION_MAJOR}.${CUDNN_VERSION_MINOR}.${CUDNN_VERSION_PATCH}")
     endif ()

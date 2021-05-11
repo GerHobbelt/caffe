@@ -75,6 +75,8 @@ models/*
 build
 .build_debug/*
 .build_release/*
+build-*
+cmake-build-*
 distribute/*
 *.testbin
 *.bin
