@@ -543,7 +543,6 @@ message LayerParameter {
   optional TileParameter tile_param = 138;
   optional VideoDataParameter video_data_param = 207;
   optional WindowDataParameter window_data_param = 129;
-  optional ReLU6Parameter relu6_param = 100000;
 }
 
 // Message that stores parameters used to apply transformation
