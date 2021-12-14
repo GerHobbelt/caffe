@@ -4,7 +4,7 @@ endif()
 
 # Known NVIDIA GPU achitectures Caffe can be compiled for.
 # This list will be used for CUDA_ARCH_NAME = All option
-set(Caffe_known_gpu_archs "30 35 50 60 61 62 70 72")
+set(Caffe_known_gpu_archs "35 50 60 61 62 70 72")
 
 ################################################################################################
 # A function for automatic detection of GPUs installed  (if autodetection is enabled)
@@ -182,7 +182,7 @@ function(detect_cuDNN)
   if(APPLE)
     set(CUDNN_LIB_NAME "libcudnn.dylib")
   elseif(MSVC)
-    set(FIND_CUDNN_LIBRARY_NAME cudnn.lib)
+    set(CUDNN_LIB_NAME cudnn.lib)
   else()
     set(CUDNN_LIB_NAME "libcudnn.so")
   endif()
@@ -193,7 +193,7 @@ function(detect_cuDNN)
     list(APPEND FIND_CUDNN_LIBRARY_PATHS "${CUDNN_ROOT}/lib/${CMAKE_LIBRARY_ARCHITECTURE}" "$ENV{CUDNN_ROOT}/lib/${CMAKE_LIBRARY_ARCHITECTURE}")
   endif() 
 
-  find_library(CUDNN_LIBRARY NAMES ${FIND_CUDNN_LIBRARY_NAME}
+  find_library(CUDNN_LIBRARY NAMES ${CUDNN_LIB_NAME}
                              PATHS ${FIND_CUDNN_LIBRARY_PATHS}
                              DOC "Path to cuDNN library.")
 
@@ -201,7 +201,11 @@ function(detect_cuDNN)
     set(HAVE_CUDNN  TRUE PARENT_SCOPE)
     set(CUDNN_FOUND TRUE PARENT_SCOPE)
 
-    file(READ ${CUDNN_INCLUDE}/cudnn.h CUDNN_VERSION_FILE_CONTENTS)
+    if (EXISTS ${CUDNN_INCLUDE}/cudnn_version.h)
+      file(READ ${CUDNN_INCLUDE}/cudnn_version.h CUDNN_VERSION_FILE_CONTENTS)
+    else()
+      file(READ ${CUDNN_INCLUDE}/cudnn.h CUDNN_VERSION_FILE_CONTENTS)
+    endif()
 
     # cuDNN v3 and beyond
     string(REGEX MATCH "define CUDNN_MAJOR * +([0-9]+)"
