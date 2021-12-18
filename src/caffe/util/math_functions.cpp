@@ -244,7 +244,7 @@ template
 double caffe_nextafter(const double b);
 
 template <typename Dtype>
-void caffe_rng_uniform(const int n, const Dtype a, const Dtype b, Dtype* r) {
+void caffe_rng_uniform(const int n, Dtype a, Dtype b, Dtype* r) {
   CHECK_GE(n, 0);
   CHECK(r);
 
