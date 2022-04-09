@@ -4,15 +4,15 @@ ARGS=$@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-export CC=/usr/bin/gcc-5
-export CXX=/usr/bin/g++-5
+export CC=/usr/bin/gcc-10
+export CXX=/usr/bin/g++-10
 
 cd $DIR
 
 BUILD_DEBUG="-DCMAKE_BUILD_TYPE=Debug"
 BUILD_RELEASE="-DCMAKE_BUILD_TYPE=Release"
 
-CMAKE_COMMON_FLAGS="-DCMAKE_C_COMPILER=/usr/bin/gcc-5 -DCMAKE_CXX_COMPILER=/usr/bin/g++-5 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCUDA_USE_STATIC_CUDA_RUNTIME=OFF"
+CMAKE_COMMON_FLAGS="-DCMAKE_C_COMPILER=/usr/bin/gcc-10 -DCMAKE_CXX_COMPILER=/usr/bin/g++-10 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCUDA_ARCH_NAME='Pascal' -DGPU_ARCHS='61' -DCUDA_USE_STATIC_CUDA_RUNTIME=OFF"
 
 mkdir -p ./build_d
 cd ./build_d
