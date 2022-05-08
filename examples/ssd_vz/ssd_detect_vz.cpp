@@ -216,7 +216,8 @@ void Detector::Preprocess(const cv::Mat& img,
     sample_resized.convertTo(sample_float, CV_32FC1);
 
   cv::Mat sample_normalized;
-  cv::subtract(sample_float, mean_, sample_normalized);
+  //cv::subtract(sample_float, mean_, sample_normalized);
+  sample_normalized = (sample_float - mean_) / 255;
 
   /* This operation will write the separate BGR planes directly to the
    * input layer of the network because it is wrapped by the cv::Mat
@@ -230,7 +231,7 @@ void Detector::Preprocess(const cv::Mat& img,
 
 DEFINE_string(mean_file, "",
     "The mean file used to subtract from the input image.");
-DEFINE_string(mean_value, "104,117,123",
+DEFINE_string(mean_value, "0, 0, 0",
     "If specified, can be one value or can be same as image channels"
     " - would subtract from the corresponding channel). Separated by ','."
     "Either mean_file or mean_value should be provided, not both.");
@@ -285,6 +286,8 @@ int main(int argc, char** argv) {
   // Process image one by one.
   std::ifstream infile(argv[3]);
   std::string file;
+  std::string lables[] = {"plate", "head", "tail", "boay"};
+  cv::Scalar colors[] = {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {127, 127, 0}};
   while (infile >> file) {
     if (file_type == "image") {
       cv::Mat img = cv::imread(file, -1);
@@ -299,14 +302,23 @@ int main(int argc, char** argv) {
         const float score = d[2];
         if (score >= confidence_threshold) {
           out << file << " ";
+          auto class_idx = static_cast<int>(d[1]);
           out << static_cast<int>(d[1]) << " ";
           out << score << " ";
           out << static_cast<int>(d[3] * img.cols) << " ";
           out << static_cast<int>(d[4] * img.rows) << " ";
           out << static_cast<int>(d[5] * img.cols) << " ";
           out << static_cast<int>(d[6] * img.rows) << std::endl;
+          cv::Rect2i det_rect{{static_cast<int>(d[3] * img.cols), static_cast<int>(d[4] * img.rows)},
+                        cv::Point2i{static_cast<int>(d[5] * img.cols), static_cast<int>(d[6] * img.rows)}};
+          cv::rectangle(img, det_rect, colors[class_idx], 3);
+          cv::putText(img, lables[class_idx] + "_" + std::to_string(score), det_rect.tl(), cv::FONT_ITALIC, 2, colors[class_idx], 3);
         }
       }
+      cv::Mat show_mat;
+      cv::resize(img, show_mat, {1280, 720});
+      cv::imshow("hello", img);
+      cv::waitKey();
     } else if (file_type == "video") {
       cv::VideoCapture cap(file);
       if (!cap.isOpened()) {
