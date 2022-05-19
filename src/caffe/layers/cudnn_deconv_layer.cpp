@@ -161,7 +161,8 @@ void CuDNNDeconvolutionLayer<Dtype>::Reshape(
 
 		  if (this->phase_ == TRAIN)
 		  {
-#if 1
+#if 0
+#  if 1
 			  // choose forward and backward algorithms + workspace(s)
 			  CUDNN_CHECK(cudnnGetConvolutionForwardAlgorithm(handle_[0],
 				  top_descs_[i],
@@ -171,7 +172,7 @@ void CuDNNDeconvolutionLayer<Dtype>::Reshape(
 				  CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT,
 				  workspace_limit_bytes,
 				  &fwd_algo_[i]));
-#else
+#  else
 			  int count;
 			  cudnnConvolutionFwdAlgoPerf_t choosen_algo_perf;
 			  // choose forward and backward algorithms + workspace(s)
@@ -185,7 +186,7 @@ void CuDNNDeconvolutionLayer<Dtype>::Reshape(
 				  &choosen_algo_perf));
 
 			  fwd_algo_[i] = choosen_algo_perf.algo;
-#endif
+#  endif
 
 			  CUDNN_CHECK(cudnnGetConvolutionForwardWorkspaceSize(handle_[0],
 				  top_descs_[i],
@@ -205,6 +206,7 @@ void CuDNNDeconvolutionLayer<Dtype>::Reshape(
 			  CUDNN_CHECK(cudnnGetConvolutionBackwardFilterWorkspaceSize(handle_[0],
 				  top_descs_[i], bottom_descs_[i], conv_descs_[i], filter_desc_,
 				  bwd_filter_algo_[i], &workspace_bwd_filter_sizes_[i]));
+#endif
 		  }
 		  else
 		  {
