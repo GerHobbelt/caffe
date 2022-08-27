@@ -5,9 +5,9 @@ set(Caffe_DEFINITIONS "")
 set(Caffe_COMPILE_OPTIONS "")
 
 # ---[ Boost
+hunter_add_package(Boost COMPONENTS system thread filesystem)
 find_package(Boost 1.54 REQUIRED COMPONENTS system thread filesystem)
-list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${Boost_INCLUDE_DIRS})
-list(APPEND Caffe_LINKER_LIBS PUBLIC ${Boost_LIBRARIES})
+list(APPEND Caffe_LINKER_LIBS Boost::system Boost::filesystem Boost::thread)
 
 # ---[ Threads
 find_package(Threads REQUIRED)
@@ -30,30 +30,24 @@ if(USE_OPENMP)
 endif()
 
 # ---[ Google-glog
-include("cmake/External/glog.cmake")
-list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${GLOG_INCLUDE_DIRS})
-list(APPEND Caffe_LINKER_LIBS PUBLIC ${GLOG_LIBRARIES})
+hunter_add_package(glog)
+find_package(glog CONFIG REQUIRED)
+list(APPEND Caffe_LINKER_LIBS glog)
 
 # ---[ Google-gflags
-include("cmake/External/gflags.cmake")
-list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${GFLAGS_INCLUDE_DIRS})
-list(APPEND Caffe_LINKER_LIBS PUBLIC ${GFLAGS_LIBRARIES})
+hunter_add_package(gflags)
+find_package(gflags CONFIG REQUIRED)
+list(APPEND Caffe_LINKER_LIBS gflags-static)
 
 # ---[ Google-protobuf
 include(cmake/ProtoBuf.cmake)
 
 # ---[ HDF5
-find_package(HDF5 COMPONENTS HL REQUIRED)
-list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${HDF5_INCLUDE_DIRS})
-list(APPEND Caffe_LINKER_LIBS PUBLIC ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
-
-# This code is taken from https://github.com/sh1r0/caffe-android-lib
-if(USE_HDF5)
-  find_package(HDF5 COMPONENTS HL REQUIRED)
-  include_directories(SYSTEM ${HDF5_INCLUDE_DIRS} ${HDF5_HL_INCLUDE_DIR})
-  list(APPEND Caffe_LINKER_LIBS ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
-  add_definitions(-DUSE_HDF5)
-endif()
+hunter_add_package(hdf5)
+find_package(ZLIB CONFIG REQUIRED)
+find_package(szip CONFIG REQUIRED)
+find_package(hdf5 CONFIG REQUIRED)
+list(APPEND Caffe_LINKER_LIBS hdf5 hdf5_hl)
 
 # ---[ LMDB
 if(USE_LMDB)
@@ -102,12 +96,16 @@ endif()
 
 # ---[ OpenCV
 if(USE_OPENCV)
-  find_package(OpenCV QUIET COMPONENTS core highgui imgproc imgcodecs)
-  if(NOT OpenCV_FOUND) # if not OpenCV 3.x, then imgcodecs are not found
+  hunter_add_package(OpenCV)
+
+  find_package(OpenCV REQUIRED)
+  if(OpenCV_VERSION MATCHES "^2\\.")
     find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc)
+  else()
+    find_package(OpenCV REQUIRED COMPONENTS core highgui imgproc imgcodecs)
   endif()
-  list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${OpenCV_INCLUDE_DIRS})
-  list(APPEND Caffe_LINKER_LIBS PUBLIC ${OpenCV_LIBS})
+
+  list(APPEND Caffe_LINKER_LIBS ${OpenCV_LIBS})
   message(STATUS "OpenCV found (${OpenCV_CONFIG_PATH})")
   list(APPEND Caffe_DEFINITIONS PUBLIC -DUSE_OPENCV)
 endif()
@@ -122,9 +120,9 @@ if(NOT APPLE)
     list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${Atlas_INCLUDE_DIR})
     list(APPEND Caffe_LINKER_LIBS PUBLIC ${Atlas_LIBRARIES})
   elseif(BLAS STREQUAL "Open" OR BLAS STREQUAL "open")
-    find_package(OpenBLAS REQUIRED)
-    list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${OpenBLAS_INCLUDE_DIR})
-    list(APPEND Caffe_LINKER_LIBS PUBLIC ${OpenBLAS_LIB})
+    hunter_add_package(OpenBLAS)
+    find_package(OpenBLAS CONFIG REQUIRED)
+    list(APPEND Caffe_LINKER_LIBS OpenBLAS::OpenBLAS)
   elseif(BLAS STREQUAL "MKL" OR BLAS STREQUAL "mkl")
     find_package(MKL REQUIRED)
     list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${MKL_INCLUDE_DIR})
@@ -182,9 +180,9 @@ if(BUILD_python)
   if(PYTHONLIBS_FOUND AND NUMPY_FOUND AND Boost_PYTHON_FOUND)
     set(HAVE_PYTHON TRUE)
     if(BUILD_python_layer)
-      list(APPEND Caffe_DEFINITIONS PRIVATE -DWITH_PYTHON_LAYER)
-      list(APPEND Caffe_INCLUDE_DIRS PRIVATE ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR} PUBLIC ${Boost_INCLUDE_DIRS})
-      list(APPEND Caffe_LINKER_LIBS PRIVATE ${PYTHON_LIBRARIES} PUBLIC ${Boost_LIBRARIES})
+      add_definitions(-DWITH_PYTHON_LAYER)
+      include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR})
+      list(APPEND Caffe_LINKER_LIBS ${PYTHON_LIBRARIES} Boost::system Boost::filesystem Boost::thread)
     endif()
   endif()
 endif()

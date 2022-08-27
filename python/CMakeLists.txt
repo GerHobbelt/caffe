@@ -3,9 +3,13 @@ if(NOT HAVE_PYTHON)
   return()
 endif()
 
+
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR})
 file(GLOB_RECURSE python_srcs ${PROJECT_SOURCE_DIR}/python/*.cpp)
 
 add_library(pycaffe SHARED ${python_srcs})
+target_link_libraries(pycaffe ${Caffe_LINK} ${PYTHON_LIBRARIES} Boost::system Boost::filesystem Boost::thread)
+set_target_properties(pycaffe PROPERTIES PREFIX "" OUTPUT_NAME "_caffe")
 caffe_default_properties(pycaffe)
 set_target_properties(pycaffe PROPERTIES PREFIX "" OUTPUT_NAME "_caffe")
 target_include_directories(pycaffe PUBLIC ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR})
