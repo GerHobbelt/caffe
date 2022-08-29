@@ -26,11 +26,45 @@ BUILD_docs:BOOL=ON
 //Build Matlab wrapper
 BUILD_matlab:BOOL=OFF
 
+//Blank or comma-separated list of test files to build without
+// 'test_' prefix and extension
+BUILD_only_tests:STRING=
+
 //Build Python wrapper
-BUILD_python:BOOL=ON
+BUILD_python:BOOL=OFF
 
 //Build the Caffe Python layer
-BUILD_python_layer:BOOL=ON
+BUILD_python_layer:BOOL=OFF
+
+//The directory containing a CMake configuration file for Boost.
+Boost_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/Boost
+
+//Boost filesystem library (debug)
+Boost_FILESYSTEM_LIBRARY_DEBUG:FILEPATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/libboost_filesystem-mt-d-a64.a
+
+//Boost filesystem library (release)
+Boost_FILESYSTEM_LIBRARY_RELEASE:FILEPATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/libboost_filesystem-mt-a64.a
+
+//Path to a file.
+Boost_INCLUDE_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/include
+
+//Boost library directory DEBUG
+Boost_LIBRARY_DIR_DEBUG:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib
+
+//Boost library directory RELEASE
+Boost_LIBRARY_DIR_RELEASE:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib
+
+//Boost system library (debug)
+Boost_SYSTEM_LIBRARY_DEBUG:FILEPATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/libboost_system-mt-d-a64.a
+
+//Boost system library (release)
+Boost_SYSTEM_LIBRARY_RELEASE:FILEPATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/libboost_system-mt-a64.a
+
+//Boost thread library (debug)
+Boost_THREAD_LIBRARY_DEBUG:FILEPATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/libboost_thread-mt-d-a64.a
+
+//Boost thread library (release)
+Boost_THREAD_LIBRARY_RELEASE:FILEPATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/libboost_thread-mt-a64.a
 
 //Caffe soname version
 CAFFE_TARGET_SOVERSION:STRING=1.0.0
@@ -285,6 +319,88 @@ CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 //Build Caffe without CUDA support
 CPU_ONLY:BOOL=OFF
 
+//Compile device code in 64 bit mode
+CUDA_64_BIT_DEVICE_CODE:BOOL=ON
+
+//Attach the build rule to the CUDA source file.  Enable only when
+// the CUDA source file is added to at most one target.
+CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE:BOOL=ON
+
+//Generate and parse .cubin files in Device mode.
+CUDA_BUILD_CUBIN:BOOL=OFF
+
+//Build in Emulation mode
+CUDA_BUILD_EMULATION:BOOL=OFF
+
+//"cudart" library
+CUDA_CUDART_LIBRARY:FILEPATH=CUDA_CUDART_LIBRARY-NOTFOUND
+
+//"cuda" library (older versions only).
+CUDA_CUDA_LIBRARY:FILEPATH=CUDA_CUDA_LIBRARY-NOTFOUND
+
+//Directory to put all the output files.  If blank it will default
+// to the CMAKE_CURRENT_BINARY_DIR
+CUDA_GENERATED_OUTPUT_DIR:PATH=
+
+//Generated file extension
+CUDA_HOST_COMPILATION_CPP:BOOL=ON
+
+//Host side compiler used by NVCC
+CUDA_HOST_COMPILER:FILEPATH=/Library/Developer/CommandLineTools/usr/bin/clang
+
+//Path to a program.
+CUDA_NVCC_EXECUTABLE:FILEPATH=CUDA_NVCC_EXECUTABLE-NOTFOUND
+
+//Semi-colon delimit multiple arguments. during all build types.
+CUDA_NVCC_FLAGS:STRING=
+
+//Semi-colon delimit multiple arguments. during DEBUG builds.
+CUDA_NVCC_FLAGS_DEBUG:STRING=
+
+//Semi-colon delimit multiple arguments. during MINSIZEREL builds.
+CUDA_NVCC_FLAGS_MINSIZEREL:STRING=
+
+//Semi-colon delimit multiple arguments. during RELEASE builds.
+CUDA_NVCC_FLAGS_RELEASE:STRING=
+
+//Semi-colon delimit multiple arguments. during RELWITHDEBINFO
+// builds.
+CUDA_NVCC_FLAGS_RELWITHDEBINFO:STRING=
+
+//Propagate C/CXX_FLAGS and friends to the host compiler via -Xcompile
+CUDA_PROPAGATE_HOST_FLAGS:BOOL=ON
+
+//Path to a file.
+CUDA_SDK_ROOT_DIR:PATH=CUDA_SDK_ROOT_DIR-NOTFOUND
+
+//Compile CUDA objects with separable compilation enabled.  Requires
+// CUDA 5.0+
+CUDA_SEPARABLE_COMPILATION:BOOL=OFF
+
+//Path to a file.
+CUDA_TOOLKIT_INCLUDE:PATH=CUDA_TOOLKIT_INCLUDE-NOTFOUND
+
+//Print out the commands run while compiling the CUDA source file.
+//  With the Makefile generator this defaults to VERBOSE variable
+// specified on the command line, but can be forced on with this
+// option.
+CUDA_VERBOSE_BUILD:BOOL=OFF
+
+//"cublas" library
+CUDA_cublas_LIBRARY:FILEPATH=CUDA_cublas_LIBRARY-NOTFOUND
+
+//"cublasemu" library
+CUDA_cublasemu_LIBRARY:FILEPATH=CUDA_cublasemu_LIBRARY-NOTFOUND
+
+//"cufft" library
+CUDA_cufft_LIBRARY:FILEPATH=CUDA_cufft_LIBRARY-NOTFOUND
+
+//"cufftemu" library
+CUDA_cufftemu_LIBRARY:FILEPATH=CUDA_cufftemu_LIBRARY-NOTFOUND
+
+//"curand" library
+CUDA_curand_LIBRARY:FILEPATH=CUDA_curand_LIBRARY-NOTFOUND
+
 //Value Computed by CMake
 Caffe_BINARY_DIR:STATIC=/Users/yongding/git/caffe/cmake-build-debug
 
@@ -294,8 +410,26 @@ Caffe_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 Caffe_SOURCE_DIR:STATIC=/Users/yongding/git/caffe
 
+//Dot tool for use with Doxygen
+DOXYGEN_DOT_EXECUTABLE:FILEPATH=DOXYGEN_DOT_EXECUTABLE-NOTFOUND
+
+//Doxygen documentation generation tool (http://www.doxygen.org)
+DOXYGEN_EXECUTABLE:FILEPATH=DOXYGEN_EXECUTABLE-NOTFOUND
+
+//The directory containing a CMake configuration file for Eigen3.
+Eigen3_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/share/eigen3/cmake
+
+//Git command line client
+GIT_EXECUTABLE:FILEPATH=/usr/bin/git
+
+//Hunter configuration types
+HUNTER_CONFIGURATION_TYPES:STRING=Release;Debug
+
 //Enable Hunter package manager support
 HUNTER_ENABLED:BOOL=ON
+
+//Override the HUNTER_ROOT.
+HUNTER_ROOT:FILEPATH=
 
 //Print a lot info
 HUNTER_STATUS_DEBUG:BOOL=OFF
@@ -303,17 +437,41 @@ HUNTER_STATUS_DEBUG:BOOL=OFF
 //Print working status
 HUNTER_STATUS_PRINT:BOOL=ON
 
+//Enable/disable TLS certificate checking on downloads
+HUNTER_TLS_VERIFY:BOOL=ON
+
+//The directory containing a CMake configuration file for Imath.
+Imath_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/Imath
+
+//The directory containing a CMake configuration file for JPEG.
+JPEG_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/JPEG
+
+//The directory containing a CMake configuration file for OpenCV.
+OpenCV_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/opencv4
+
+//The directory containing a CMake configuration file for OpenEXR.
+OpenEXR_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/OpenEXR
+
+//The directory containing a CMake configuration file for PNG.
+PNG_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/PNG
+
+//The directory containing a CMake configuration file for Protobuf.
+Protobuf_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/protobuf
+
+//The directory containing a CMake configuration file for TIFF.
+TIFF_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/TIFF
+
 //Build Caffe with cuDNN library support
 USE_CUDNN:BOOL=ON
 
 //Build with hdf5
-USE_HDF5:BOOL=ON
+USE_HDF5:BOOL=OFF
 
 //Build with levelDB
-USE_LEVELDB:BOOL=ON
+USE_LEVELDB:BOOL=OFF
 
 //Build with lmdb
-USE_LMDB:BOOL=ON
+USE_LMDB:BOOL=OFF
 
 //Build Caffe with NCCL library support
 USE_NCCL:BOOL=OFF
@@ -328,14 +486,55 @@ USE_OPENMP:BOOL=OFF
 //IDE Solution folders
 USE_PROJECT_FOLDERS:BOOL=OFF
 
+//The directory containing a CMake configuration file for ZLIB.
+ZLIB_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/ZLIB
+
+//The directory containing a CMake configuration file for gflags.
+gflags_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/gflags
+
+//The directory containing a CMake configuration file for glog.
+glog_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/glog
+
+//The directory containing a CMake configuration file for jasper.
+jasper_DIR:PATH=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib/cmake/jasper
+
+//CMake built-in FindProtobuf.cmake module compatible
+protobuf_MODULE_COMPATIBLE:BOOL=OFF
+
+//Enable for verbose output
+protobuf_VERBOSE:BOOL=OFF
+
 //Specify which Python version to use
 python_version:STRING=2
+
+//vecLib include directory
+vecLib_INCLUDE_DIR:PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers
 
 
 ########################
 # INTERNAL cache entries
 ########################
 
+//ADVANCED property for variable: Boost_DIR
+Boost_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_FILESYSTEM_LIBRARY_DEBUG
+Boost_FILESYSTEM_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_FILESYSTEM_LIBRARY_RELEASE
+Boost_FILESYSTEM_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_INCLUDE_DIR
+Boost_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_LIBRARY_DIR_DEBUG
+Boost_LIBRARY_DIR_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_LIBRARY_DIR_RELEASE
+Boost_LIBRARY_DIR_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_SYSTEM_LIBRARY_DEBUG
+Boost_SYSTEM_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_SYSTEM_LIBRARY_RELEASE
+Boost_SYSTEM_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_THREAD_LIBRARY_DEBUG
+Boost_THREAD_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_THREAD_LIBRARY_RELEASE
+Boost_THREAD_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ADDR2LINE
 CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
@@ -382,6 +581,7 @@ CMAKE_C_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
 CMAKE_C_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_C_FLAGS_RELWITHDEBINFO
 CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+CMAKE_DEBUG_POSTFIX:INTERNAL=d
 //ADVANCED property for variable: CMAKE_DLLTOOL
 CMAKE_DLLTOOL-ADVANCED:INTERNAL=1
 //Executable file format
@@ -408,6 +608,10 @@ CMAKE_GENERATOR_INSTANCE:INTERNAL=
 CMAKE_GENERATOR_PLATFORM:INTERNAL=
 //Name of generator toolset.
 CMAKE_GENERATOR_TOOLSET:INTERNAL=
+//Test CMAKE_HAVE_LIBC_PTHREAD
+CMAKE_HAVE_LIBC_PTHREAD:INTERNAL=1
+//Have include pthread.h
+CMAKE_HAVE_PTHREAD_H:INTERNAL=1
 //Source directory with the top level CMakeLists.txt file for this
 // project
 CMAKE_HOME_DIRECTORY:INTERNAL=/Users/yongding/git/caffe
@@ -460,7 +664,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=1
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=9
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
@@ -471,6 +675,7 @@ CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
 CMAKE_RANLIB-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_READELF
 CMAKE_READELF-ADVANCED:INTERNAL=1
+CMAKE_RELEASE_POSTFIX:INTERNAL=
 //Path to CMake installation.
 CMAKE_ROOT:INTERNAL=/Users/yongding/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/222.3345.126/CLion.app/Contents/bin/cmake/mac/share/cmake-3.23
 //ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS
@@ -503,9 +708,118 @@ CMAKE_STRIP-ADVANCED:INTERNAL=1
 CMAKE_UNAME:INTERNAL=/usr/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_64_BIT_DEVICE_CODE
+CUDA_64_BIT_DEVICE_CODE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE
+CUDA_ATTACH_VS_BUILD_RULE_TO_CUDA_FILE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_BUILD_CUBIN
+CUDA_BUILD_CUBIN-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_BUILD_EMULATION
+CUDA_BUILD_EMULATION-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_CUDART_LIBRARY
+CUDA_CUDART_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_CUDA_LIBRARY
+CUDA_CUDA_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_GENERATED_OUTPUT_DIR
+CUDA_GENERATED_OUTPUT_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_HOST_COMPILATION_CPP
+CUDA_HOST_COMPILATION_CPP-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_EXECUTABLE
+CUDA_NVCC_EXECUTABLE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_FLAGS
+CUDA_NVCC_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_FLAGS_DEBUG
+CUDA_NVCC_FLAGS_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_FLAGS_MINSIZEREL
+CUDA_NVCC_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_FLAGS_RELEASE
+CUDA_NVCC_FLAGS_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_NVCC_FLAGS_RELWITHDEBINFO
+CUDA_NVCC_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_PROPAGATE_HOST_FLAGS
+CUDA_PROPAGATE_HOST_FLAGS-ADVANCED:INTERNAL=1
+//This is the value of the last time CUDA_SDK_ROOT_DIR was set
+// successfully.
+CUDA_SDK_ROOT_DIR_INTERNAL:INTERNAL=CUDA_SDK_ROOT_DIR-NOTFOUND
+//ADVANCED property for variable: CUDA_SEPARABLE_COMPILATION
+CUDA_SEPARABLE_COMPILATION-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_TOOLKIT_INCLUDE
+CUDA_TOOLKIT_INCLUDE-ADVANCED:INTERNAL=1
+//This is the value of the last time CUDA_TOOLKIT_ROOT_DIR was
+// set successfully.
+CUDA_TOOLKIT_ROOT_DIR_INTERNAL:INTERNAL=
+//This is the value of the last time CUDA_TOOLKIT_TARGET_DIR was
+// set successfully.
+CUDA_TOOLKIT_TARGET_DIR_INTERNAL:INTERNAL=
+CUDA_USE_STATIC_CUDA_RUNTIME:INTERNAL=OFF
+//ADVANCED property for variable: CUDA_VERBOSE_BUILD
+CUDA_VERBOSE_BUILD-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cublas_LIBRARY
+CUDA_cublas_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cublasemu_LIBRARY
+CUDA_cublasemu_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cufft_LIBRARY
+CUDA_cufft_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_cufftemu_LIBRARY
+CUDA_cufftemu_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CUDA_curand_LIBRARY
+CUDA_curand_LIBRARY-ADVANCED:INTERNAL=1
+//Location of make2cmake.cmake
+CUDA_make2cmake:INTERNAL=/Users/yongding/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/222.3345.126/CLion.app/Contents/bin/cmake/mac/share/cmake-3.23/Modules/FindCUDA/make2cmake.cmake
+//Location of parse_cubin.cmake
+CUDA_parse_cubin:INTERNAL=/Users/yongding/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/222.3345.126/CLion.app/Contents/bin/cmake/mac/share/cmake-3.23/Modules/FindCUDA/parse_cubin.cmake
+//Location of run_nvcc.cmake
+CUDA_run_nvcc:INTERNAL=/Users/yongding/Library/Application Support/JetBrains/Toolbox/apps/CLion/ch-0/222.3345.126/CLion.app/Contents/bin/cmake/mac/share/cmake-3.23/Modules/FindCUDA/run_nvcc.cmake
+//ADVANCED property for variable: DOXYGEN_DOT_EXECUTABLE
+DOXYGEN_DOT_EXECUTABLE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: DOXYGEN_EXECUTABLE
+DOXYGEN_EXECUTABLE-ADVANCED:INTERNAL=1
+//Details about finding Git
+FIND_PACKAGE_MESSAGE_DETAILS_Git:INTERNAL=[/usr/bin/git][v2.32.1 (Apple Git-133)()]
+//Details about finding OpenCV
+FIND_PACKAGE_MESSAGE_DETAILS_OpenCV:INTERNAL=[/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install][cfound components: core highgui imgproc imgcodecs ][v4.5.5()]
+//Details about finding Threads
+FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
+//Details about finding ZLIB
+FIND_PACKAGE_MESSAGE_DETAILS_ZLIB:INTERNAL=[ZLIB::zlib][/include][v()]
+//Details about finding vecLib
+FIND_PACKAGE_MESSAGE_DETAILS_vecLib:INTERNAL=[/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers][v()]
+//ADVANCED property for variable: GIT_EXECUTABLE
+GIT_EXECUTABLE-ADVANCED:INTERNAL=1
+HUNTER_CACHED_BUILD_SHARED_LIBS:INTERNAL=
+HUNTER_CACHED_CONFIGURATION_TYPES:INTERNAL=Release;Debug
 HUNTER_CACHED_ROOT:INTERNAL=/Users/yongding/.hunter
-HUNTER_SHA1:INTERNAL=51594bfe1f58a7264c811a0d84bea79fc6758d6b
-HUNTER_VERSION:INTERNAL=0.16.5
+HUNTER_CONFIG_SHA1:INTERNAL=b8c831cb322c18c57e51dd35e7b1b5ade8211ea9
+HUNTER_SHA1:INTERNAL=10738b59e539818a01090e64c2d09896247530c7
+HUNTER_TOOLCHAIN_SHA1:INTERNAL=121528d7cadeda6ef78c3ce7b7e7ea57c173c5d0
+HUNTER_URL:INTERNAL=https://github.com/cpp-pm/hunter/archive/v0.24.3.tar.gz
+HUNTER_VERSION:INTERNAL=0.24.3
+//Last used BOOST_ROOT value.
+_BOOST_ROOT_LAST:INTERNAL=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install
+//Components requested for this build tree.
+_Boost_COMPONENTS_SEARCHED:INTERNAL=filesystem;system;thread
+//Last used Boost_INCLUDE_DIR value.
+_Boost_INCLUDE_DIR_LAST:INTERNAL=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/include
+//Last used Boost_LIBRARY_DIR_DEBUG value.
+_Boost_LIBRARY_DIR_DEBUG_LAST:INTERNAL=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib
+//Last used Boost_LIBRARY_DIR_RELEASE value.
+_Boost_LIBRARY_DIR_RELEASE_LAST:INTERNAL=/Users/yongding/.hunter/_Base/10738b5/121528d/b8c831c/Install/lib
+//Last used Boost_NAMESPACE value.
+_Boost_NAMESPACE_LAST:INTERNAL=boost
+//Last used Boost_NO_SYSTEM_PATHS value.
+_Boost_NO_SYSTEM_PATHS_LAST:INTERNAL=ON
+//Last used Boost_USE_MULTITHREADED value.
+_Boost_USE_MULTITHREADED_LAST:INTERNAL=TRUE
+//Last used Boost_USE_STATIC_LIBS value.
+_Boost_USE_STATIC_LIBS_LAST:INTERNAL=ON
 //CMAKE_INSTALL_PREFIX during last run
 _GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX:INTERNAL=/usr/local
+//Have symbol clock_gettime
+_hunter_boost_have_clock_gettime:INTERNAL=1
+//ADVANCED property for variable: protobuf_MODULE_COMPATIBLE
+protobuf_MODULE_COMPATIBLE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: protobuf_VERBOSE
+protobuf_VERBOSE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: vecLib_INCLUDE_DIR
+vecLib_INCLUDE_DIR-ADVANCED:INTERNAL=1
 

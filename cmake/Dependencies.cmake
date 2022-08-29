@@ -1,59 +1,51 @@
-# These lists are later turned into target properties on main caffe library target
+# This list is required for static linking and exported to CaffeConfig.cmake
 set(Caffe_LINKER_LIBS "")
-set(Caffe_INCLUDE_DIRS "")
-set(Caffe_DEFINITIONS "")
-set(Caffe_COMPILE_OPTIONS "")
 
 # ---[ Boost
 hunter_add_package(Boost COMPONENTS system thread filesystem)
-find_package(Boost 1.54 REQUIRED COMPONENTS system thread filesystem)
+find_package(Boost REQUIRED COMPONENTS system thread filesystem)
 list(APPEND Caffe_LINKER_LIBS Boost::system Boost::filesystem Boost::thread)
 
 # ---[ Threads
 find_package(Threads REQUIRED)
-list(APPEND Caffe_LINKER_LIBS PRIVATE ${CMAKE_THREAD_LIBS_INIT})
-
-# ---[ OpenMP
-if(USE_OPENMP)
-  # Ideally, this should be provided by the BLAS library IMPORTED target. However,
-  # nobody does this, so we need to link to OpenMP explicitly and have the maintainer
-  # to flick the switch manually as needed.
-  #
-  # Moreover, OpenMP package does not provide an IMPORTED target as well, and the
-  # suggested way of linking to OpenMP is to append to CMAKE_{C,CXX}_FLAGS.
-  # However, this naïve method will force any user of Caffe to add the same kludge
-  # into their buildsystem again, so we put these options into per-target PUBLIC
-  # compile options and link flags, so that they will be exported properly.
-  find_package(OpenMP REQUIRED)
-  list(APPEND Caffe_LINKER_LIBS PRIVATE ${OpenMP_CXX_FLAGS})
-  list(APPEND Caffe_COMPILE_OPTIONS PRIVATE ${OpenMP_CXX_FLAGS})
-endif()
+list(APPEND Caffe_LINKER_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
 # ---[ Google-glog
 hunter_add_package(glog)
 find_package(glog CONFIG REQUIRED)
-list(APPEND Caffe_LINKER_LIBS glog)
+list(APPEND Caffe_LINKER_LIBS glog::glog)
 
 # ---[ Google-gflags
 hunter_add_package(gflags)
 find_package(gflags CONFIG REQUIRED)
-list(APPEND Caffe_LINKER_LIBS gflags-static)
+list(APPEND Caffe_LINKER_LIBS gflags)
 
 # ---[ Google-protobuf
 include(cmake/ProtoBuf.cmake)
 
-# ---[ HDF5
-hunter_add_package(hdf5)
-find_package(ZLIB CONFIG REQUIRED)
-find_package(szip CONFIG REQUIRED)
-find_package(hdf5 CONFIG REQUIRED)
-list(APPEND Caffe_LINKER_LIBS hdf5 hdf5_hl)
+## ---[ HDF5
+#if (USE_HDF5)
+#  hunter_add_package(hdf5)
+#  find_package(ZLIB CONFIG REQUIRED)
+#  find_package(szip CONFIG REQUIRED)
+#  find_package(hdf5 CONFIG REQUIRED)
+#  include_directories(SYSTEM ${HDF5_INCLUDE_DIRS} ${HDF5_HL_INCLUDE_DIR})
+#  list(APPEND Caffe_LINKER_LIBS hdf5 hdf5_hl)
+#  add_definitions(-DUSE_HDF5)
+#endif ()
 
+# ---[ HDF5
+if (USE_HDF5)
+  find_package(HDF5 COMPONENTS HL REQUIRED)
+  include_directories(SYSTEM ${HDF5_INCLUDE_DIRS} ${HDF5_HL_INCLUDE_DIR})
+  list(APPEND Caffe_LINKER_LIBS ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
+  add_definitions(-DUSE_HDF5)
+endif ()
 # ---[ LMDB
 if(USE_LMDB)
-  find_package(LMDB REQUIRED)
-  list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${LMDB_INCLUDE_DIR})
-  list(APPEND Caffe_LINKER_LIBS PUBLIC ${LMDB_LIBRARIES})
+  hunter_add_package(lmdb)
+  find_package(liblmdb CONFIG REQUIRED)
+  list(APPEND Caffe_LINKER_LIBS liblmdb::lmdb)
   list(APPEND Caffe_DEFINITIONS PUBLIC -DUSE_LMDB)
   if(ALLOW_LMDB_NOLOCK)
     list(APPEND Caffe_DEFINITIONS PRIVATE -DALLOW_LMDB_NOLOCK)
@@ -62,17 +54,19 @@ endif()
 
 # ---[ LevelDB
 if(USE_LEVELDB)
-  find_package(LevelDB REQUIRED)
-  list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${LevelDB_INCLUDES})
-  list(APPEND Caffe_LINKER_LIBS PUBLIC ${LevelDB_LIBRARIES})
+  hunter_add_package(crc32c)
+  find_package(Crc32c CONFIG REQUIRED)
+  hunter_add_package(leveldb)
+  find_package(leveldb CONFIG REQUIRED)
+  list(APPEND Caffe_LINKER_LIBS leveldb::leveldb)
   list(APPEND Caffe_DEFINITIONS PUBLIC -DUSE_LEVELDB)
 endif()
 
 # ---[ Snappy
 if(USE_LEVELDB)
-  find_package(Snappy REQUIRED)
-  list(APPEND Caffe_INCLUDE_DIRS PRIVATE ${Snappy_INCLUDE_DIR})
-  list(APPEND Caffe_LINKER_LIBS PRIVATE ${Snappy_LIBRARIES})
+  hunter_add_package(sleef)
+  find_package(sleef CONFIG REQUIRED)
+  list(APPEND Caffe_LINKER_LIBS sleef::sleef)
 endif()
 
 # ---[ CUDA
@@ -117,26 +111,26 @@ if(NOT APPLE)
 
   if(BLAS STREQUAL "Atlas" OR BLAS STREQUAL "atlas")
     find_package(Atlas REQUIRED)
-    list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${Atlas_INCLUDE_DIR})
-    list(APPEND Caffe_LINKER_LIBS PUBLIC ${Atlas_LIBRARIES})
+    include_directories(SYSTEM ${Atlas_INCLUDE_DIR})
+    list(APPEND Caffe_LINKER_LIBS ${Atlas_LIBRARIES})
   elseif(BLAS STREQUAL "Open" OR BLAS STREQUAL "open")
     hunter_add_package(OpenBLAS)
     find_package(OpenBLAS CONFIG REQUIRED)
     list(APPEND Caffe_LINKER_LIBS OpenBLAS::OpenBLAS)
   elseif(BLAS STREQUAL "MKL" OR BLAS STREQUAL "mkl")
     find_package(MKL REQUIRED)
-    list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${MKL_INCLUDE_DIR})
-    list(APPEND Caffe_LINKER_LIBS PUBLIC ${MKL_LIBRARIES})
-    list(APPEND Caffe_DEFINITIONS PUBLIC -DUSE_MKL)
+    include_directories(SYSTEM ${MKL_INCLUDE_DIR})
+    list(APPEND Caffe_LINKER_LIBS ${MKL_LIBRARIES})
+    add_definitions(-DUSE_MKL)
   endif()
 elseif(APPLE)
   find_package(vecLib REQUIRED)
-  list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${vecLib_INCLUDE_DIR})
-  list(APPEND Caffe_LINKER_LIBS PUBLIC ${vecLib_LINKER_LIBS})
+  include_directories(SYSTEM ${vecLib_INCLUDE_DIR})
+  list(APPEND Caffe_LINKER_LIBS ${vecLib_LINKER_LIBS})
 
   if(VECLIB_FOUND)
     if(NOT vecLib_INCLUDE_DIR MATCHES "^/System/Library/Frameworks/vecLib.framework.*")
-      list(APPEND Caffe_DEFINITIONS PUBLIC -DUSE_ACCELERATE)
+      list(APPEND Caffe_DEFINITIONS -DUSE_ACCELERATE)
     endif()
   endif()
 endif()

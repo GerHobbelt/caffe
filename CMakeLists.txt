@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 3.16)
 if(POLICY CMP0046)
   cmake_policy(SET CMP0046 NEW)
 endif()
@@ -6,10 +6,12 @@ if(POLICY CMP0054)
   cmake_policy(SET CMP0054 NEW)
 endif()
 
+set(CMAKE_CXX_STANDARD 17)
+
 include("cmake/HunterGate.cmake")
 HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.16.5.tar.gz"
-    SHA1 "51594bfe1f58a7264c811a0d84bea79fc6758d6b"
+        URL "https://github.com/cpp-pm/hunter/archive/v0.24.3.tar.gz"
+        SHA1 "10738b59e539818a01090e64c2d09896247530c7"
 )
 
 # ---[ Caffe project
@@ -37,19 +39,19 @@ caffe_option(CPU_ONLY  "Build Caffe without CUDA support" OFF) # TODO: rename to
 caffe_option(USE_CUDNN "Build Caffe with cuDNN library support" ON IF NOT CPU_ONLY)
 caffe_option(USE_NCCL "Build Caffe with NCCL library support" OFF)
 caffe_option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-caffe_option(BUILD_python "Build Python wrapper" ON)
+caffe_option(BUILD_python "Build Python wrapper" OFF)
 set(python_version "2" CACHE STRING "Specify which Python version to use")
 caffe_option(BUILD_matlab "Build Matlab wrapper" OFF IF UNIX OR APPLE)
 caffe_option(BUILD_docs   "Build documentation" ON IF UNIX OR APPLE)
-caffe_option(BUILD_python_layer "Build the Caffe Python layer" ON)
+caffe_option(BUILD_python_layer "Build the Caffe Python layer" OFF)
 caffe_option(USE_OPENCV "Build with OpenCV support" ON)
-caffe_option(USE_LEVELDB "Build with levelDB" ON)
-caffe_option(USE_LMDB "Build with lmdb" ON)
+caffe_option(USE_LEVELDB "Build with levelDB" OFF)
+caffe_option(USE_LMDB "Build with lmdb" OFF)
 caffe_option(ALLOW_LMDB_NOLOCK "Allow MDB_NOLOCK when reading LMDB files (only if necessary)" OFF)
 caffe_option(USE_OPENMP "Link with OpenMP (when your BLAS wants OpenMP and you get linker errors)" OFF)
 
 # This code is taken from https://github.com/sh1r0/caffe-android-lib
-caffe_option(USE_HDF5 "Build with hdf5" ON)
+caffe_option(USE_HDF5 "Build with hdf5" OFF)
 
 # ---[ Dependencies
 include(cmake/Dependencies.cmake)
@@ -74,8 +76,8 @@ configure_file(cmake/Templates/caffe_config.h.in "${PROJECT_BINARY_DIR}/caffe_co
 
 # ---[ Includes
 set(Caffe_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
-set(Caffe_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
-include_directories(${PROJECT_BINARY_DIR})
+include_directories(${Caffe_INCLUDE_DIR} ${PROJECT_BINARY_DIR})
+include_directories(BEFORE src) # This is needed for gtest.
 
 # ---[ Includes & defines for CUDA
 
