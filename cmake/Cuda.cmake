@@ -247,7 +247,7 @@ endif()
 set(HAVE_CUDA TRUE)
 message(STATUS "CUDA detected: " ${CUDA_VERSION})
 list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${CUDA_INCLUDE_DIRS})
-list(APPEND Caffe_LINKER_LIBS PUBLIC ${CUDA_CUDART_LIBRARY}
+list(APPEND Caffe_LINKER_LIBS ${CUDA_CUDART_LIBRARY}
                                      ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES})
 
 # cudnn detection
@@ -256,7 +256,7 @@ if(USE_CUDNN)
   if(HAVE_CUDNN)
     list(APPEND Caffe_DEFINITIONS PUBLIC -DUSE_CUDNN)
     list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${CUDNN_INCLUDE})
-    list(APPEND Caffe_LINKER_LIBS PUBLIC ${CUDNN_LIBRARY})
+    list(APPEND Caffe_LINKER_LIBS ${CUDNN_LIBRARY})
   endif()
 endif()
 
