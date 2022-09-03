@@ -1,3 +1,8 @@
+#if defined(_MSC_VER)
+#include <process.h>
+#define getpid() _getpid()
+#endif
+
 #include <boost/thread.hpp>
 #include <glog/logging.h>
 #include <cmath>
