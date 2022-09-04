@@ -32,7 +32,7 @@ get_filename_component(Caffe_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
 # Our library dependencies
 if(NOT TARGET caffe AND NOT caffe_BINARY_DIR)
-  include("${Caffe_CMAKE_DIR}/CaffeTargets.cmake")
+  include("${Caffe_CMAKE_DIR}/Caffe-dflTargets.cmake")
 endif()
 
 # List of IMPORTED libs created by CaffeTargets.cmake
