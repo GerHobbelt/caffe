@@ -16,9 +16,9 @@ find_package(Threads REQUIRED)
 list(APPEND Caffe_LINKER_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
 # ---[ Google-glog
-find_package(glog)
-if (glog_FOUND)
-  message("Find glog in system")
+find_package(GLOG)
+if (GLOG_FOUND)
+  message("Find GLOG in system")
   include_directories(${GLOG_INCLUDE_DIRS})
   list(APPEND Caffe_LINKER_LIBS ${GLOG_LIBRARIES})
 else()
