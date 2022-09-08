@@ -4,11 +4,12 @@
 find_package(Protobuf)
 if (Protobuf_FOUND)
   message("Find Protobuf in system")
+  list(APPEND Caffe_LINKER_LIBS ${PROTOBUF_LIBRARIES})
 else()
   hunter_add_package(Protobuf)
+  find_package(Protobuf CONFIG REQUIRED)
+  list(APPEND Caffe_LINKER_LIBS protobuf::libprotobuf)
 endif ()
-find_package(Protobuf CONFIG REQUIRED)
-list(APPEND Caffe_LINKER_LIBS protobuf::libprotobuf)
 
 if(Protobuf_FOUND)
   # fetches protobuf version
