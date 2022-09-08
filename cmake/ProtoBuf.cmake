@@ -1,7 +1,12 @@
 # Finds Google Protocol Buffers library and compilers and extends
 # the standard cmake script with version and python generation support
 
-hunter_add_package(Protobuf)
+find_package(Protobuf)
+if (Protobuf_FOUND)
+  message("Find Protobuf in system")
+else()
+  hunter_add_package(Protobuf)
+endif ()
 find_package(Protobuf CONFIG REQUIRED)
 list(APPEND Caffe_LINKER_LIBS protobuf::libprotobuf)
 
