@@ -11,12 +11,6 @@ else()
   list(APPEND Caffe_LINKER_LIBS protobuf::libprotobuf)
 endif ()
 
-if(EXISTS ${PROTOBUF_PROTOC_EXECUTABLE})
-  message(STATUS "Found PROTOBUF Compiler: ${PROTOBUF_PROTOC_EXECUTABLE}")
-else()
-  message(FATAL_ERROR "Could not find PROTOBUF Compiler")
-endif()
-
 if(PROTOBUF_FOUND)
   # fetches protobuf version
   caffe_parse_header(${PROTOBUF_INCLUDE_DIR}/google/protobuf/stubs/common.h VERION_LINE GOOGLE_PROTOBUF_VERSION)
