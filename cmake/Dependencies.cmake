@@ -28,7 +28,7 @@ else()
 endif ()
 
 # ---[ Google-gflags
-find_package(gflags)
+find_package(GFlags)
 if (gflags_FOUND)
   message("Find gflags in system")
   include_directories(${GFLAGS_INCLUDE_DIRS})
