@@ -18,7 +18,7 @@ HunterGate(
 )
 
 # ---[ Caffe project
-project(Caffe-dfl VERSION 0.0.1 LANGUAGES C CXX)
+project(Caffe-dfl VERSION 0.0.5 LANGUAGES C CXX)
 
 # ---[ Caffe version
 set(CAFFE_TARGET_VERSION "1.0.0" CACHE STRING "Caffe logical version")
