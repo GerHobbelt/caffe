@@ -35,14 +35,12 @@ if(USE_OPENMP)
 endif()
 
 # ---[ Google-glog
-include("cmake/External/glog.cmake")
-list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${GLOG_INCLUDE_DIRS})
-list(APPEND Caffe_LINKER_LIBS PUBLIC ${GLOG_LIBRARIES})
+find_package(glog)
+list(APPEND Caffe_LINKER_LIBS PUBLIC glog::glog)
 
 # ---[ Google-gflags
-include("cmake/External/gflags.cmake")
-list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${GFLAGS_INCLUDE_DIRS})
-list(APPEND Caffe_LINKER_LIBS PUBLIC ${GFLAGS_LIBRARIES})
+find_package(gflags)
+list(APPEND Caffe_LINKER_LIBS PUBLIC gflags::gflags)
 
 # ---[ Google-protobuf
 include(cmake/ProtoBuf.cmake)
@@ -60,7 +58,7 @@ else()
   find_package(HDF5 COMPONENTS HL REQUIRED)
 endif()
 list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${HDF5_INCLUDE_DIRS})
-list(APPEND Caffe_LINKER_LIBS PUBLIC ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
+list(APPEND Caffe_LINKER_LIBS PUBLIC hdf5::hdf5-shared hdf5::hdf5_hl-shared)
 
 # ---[ LMDB
 if(USE_LMDB)
@@ -76,16 +74,14 @@ endif()
 # ---[ LevelDB
 if(USE_LEVELDB)
   find_package(LevelDB REQUIRED)
-  list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${LevelDB_INCLUDES})
-  list(APPEND Caffe_LINKER_LIBS PUBLIC ${LevelDB_LIBRARIES})
+  list(APPEND Caffe_LINKER_LIBS PUBLIC leveldb::leveldb)
   list(APPEND Caffe_DEFINITIONS PUBLIC -DUSE_LEVELDB)
 endif()
 
 # ---[ Snappy
 if(USE_LEVELDB)
   find_package(Snappy REQUIRED)
-  list(APPEND Caffe_INCLUDE_DIRS PRIVATE ${Snappy_INCLUDE_DIR})
-  list(APPEND Caffe_LINKER_LIBS PRIVATE ${Snappy_LIBRARIES})
+  list(APPEND Caffe_LINKER_LIBS PRIVATE Snappy::snappy)
 endif()
 
 # ---[ CUDA
@@ -130,8 +126,8 @@ if(NOT APPLE)
     list(APPEND Caffe_LINKER_LIBS PUBLIC ${Atlas_LIBRARIES})
   elseif(BLAS STREQUAL "Open" OR BLAS STREQUAL "open")
     find_package(OpenBLAS REQUIRED)
-    list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${OpenBLAS_INCLUDE_DIR})
-    list(APPEND Caffe_LINKER_LIBS PUBLIC ${OpenBLAS_LIB})
+    list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${OpenBLAS_INCLUDE_DIRS})
+    list(APPEND Caffe_LINKER_LIBS PUBLIC OpenBLAS::OpenBLAS)
   elseif(BLAS STREQUAL "MKL" OR BLAS STREQUAL "mkl")
     find_package(MKL REQUIRED)
     list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${MKL_INCLUDE_DIR})

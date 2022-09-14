@@ -1,0 +1,7 @@
+BasedOnStyle: Google
+---
+Language: Cpp
+AlignEscapedNewlines: Left
+AlignAfterOpenBracket: DontAlign
+DerivePointerAlignment: false
+PointerAlignment: Left
