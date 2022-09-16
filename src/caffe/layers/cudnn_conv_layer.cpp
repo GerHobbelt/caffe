@@ -139,6 +139,8 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
     CUDA_CHECK(cudaMemGetInfo(&free_memory, &total_memory));
     for (int j = 0; j < returned_algo_count; j++) {
       if (conv_fwd_results[j].status == CUDNN_STATUS_SUCCESS &&
+          conv_fwd_results[j].algo !=
+              CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD_NONFUSED &&
           conv_fwd_results[j].memory < free_memory &&
           conv_fwd_results[j].memory <= workspace_limit_bytes) {
         fwd_algo_[i] = conv_fwd_results[j].algo;
@@ -157,9 +159,11 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
 
     CUDA_CHECK(cudaMemGetInfo(&free_memory, &total_memory));
     for (int j = 0; j < returned_algo_count; j++) {
-      if (conv_bwd_filter_results[i].status == CUDNN_STATUS_SUCCESS &&
-          conv_bwd_filter_results[i].memory < free_memory &&
-          conv_bwd_filter_results[i].memory <= workspace_limit_bytes) {
+      if (conv_bwd_filter_results[j].status == CUDNN_STATUS_SUCCESS &&
+          conv_bwd_filter_results[j].algo !=
+              CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED &&
+          conv_bwd_filter_results[j].memory < free_memory &&
+          conv_bwd_filter_results[j].memory <= workspace_limit_bytes) {
         bwd_filter_algo_[i] = conv_bwd_filter_results[j].algo;
         break;
       }
@@ -177,6 +181,8 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
     CUDA_CHECK(cudaMemGetInfo(&free_memory, &total_memory));
     for (int j = 0; j < returned_algo_count; j++) {
       if (conv_bwd_data_results[j].status == CUDNN_STATUS_SUCCESS &&
+          conv_bwd_data_results[j].algo !=
+              CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD_NONFUSED &&
           conv_bwd_data_results[j].memory < free_memory &&
           conv_bwd_data_results[j].memory <= workspace_limit_bytes) {
         bwd_data_algo_[i] = conv_bwd_data_results[j].algo;
