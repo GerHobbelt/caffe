@@ -44,7 +44,7 @@ template <typename Dtype>
 void Solver<Dtype>::Init(const SolverParameter& param) {
     //DFL2: add this line to disable log.
     fLI::FLAGS_minloglevel=3;
-    
+
   LOG_IF(INFO, Caffe::root_solver()) << "Initializing solver from parameters: "
     << std::endl << param.DebugString();
   param_ = param;
