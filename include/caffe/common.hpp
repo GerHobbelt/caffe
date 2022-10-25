@@ -72,6 +72,29 @@ private:\
 // See PR #1236
 namespace cv { class Mat; }
 
+// Supporting OpenCV 4
+// Replace the CV_ constants with cv:: constants
+#define CV_LOAD_IMAGE_GRAYSCALE cv::IMREAD_GRAYSCALE
+#define CV_CAP_PROP_FRAME_COUNT cv::CAP_PROP_FRAME_COUNT
+#define CV_LOAD_IMAGE_COLOR cv::IMREAD_COLOR
+#define CV_CAP_PROP_POS_FRAMES cv::CAP_PROP_POS_FRAMES
+#define CV_BGR2GRAY cv::COLOR_BGR2GRAY
+#define CV_THRESH_BINARY_INV cv::THRESH_BINARY_INV
+#define CV_THRESH_OTSU cv::THRESH_OTSU
+#define CV_THRESH_BINARY_INV cv::THRESH_BINARY_INV
+#define CV_GRAY2BGR cv::COLOR_GRAY2BGR
+#define CV_BGR2YCrCb cv::COLOR_BGR2YCrCb
+#define CV_YCrCb2BGR cv::COLOR_YCrCb2BGR
+#define CV_IMWRITE_JPEG_QUALITY cv::IMWRITE_JPEG_QUALITY
+#define CV_BGR2HSV cv::COLOR_BGR2HSV
+#define CV_BGR2Lab cv::COLOR_BGR2Lab
+#define CV_HSV2BGR cv::COLOR_HSV2BGR
+#define CV_BGR2HSV cv::COLOR_BGR2HSV
+
+// TODO: potentially #define cv:FILLED -1
+#define CV_FILLED cv::FILLED
+#define CV_FOURCC cv::VideoWriter::fourcc
+
 namespace caffe {
 
 // We will use the boost shared_ptr instead of the new C++11 one mainly
