@@ -1,0 +1,64 @@
+name: CI
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    name: ${{ matrix.build_name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Use a build matrix to test many builds in parallel
+          # envvar defaults:
+          #   WITH_CMAKE: false
+          #   WITH_PYTHON3: false
+          #   WITH_IO: true
+          #   WITH_CUDA: false
+          #   WITH_CUDNN: false
+          - BUILD_NAME="default-make"
+          #   - BUILD_NAME="python3-make"
+          #     WITH_PYTHON3=true
+          - BUILD_NAME="no-io-make"
+            WITH_IO=false
+          - BUILD_NAME="cuda-make"
+            WITH_CUDA=true
+          - BUILD_NAME="cudnn-make"
+            WITH_CUDA=true
+            WITH_CUDNN=true
+          - BUILD_NAME="default-cmake"
+            WITH_CMAKE=true
+          - BUILD_NAME="python3-cmake"
+            WITH_CMAKE=true WITH_PYTHON3=true
+          - BUILD_NAME="no-io-cmake"
+            WITH_CMAKE=true
+            WITH_IO=false
+          - BUILD_NAME="cuda-cmake"
+            WITH_CMAKE=true
+            WITH_CUDA=true
+          - BUILD_NAME="cudnn-cmake"
+            WITH_CMAKE=true
+            WITH_CUDA=true
+            WITH_CUDNN=true
+     env:
+       NUM_THREADS: 4
+     steps:
+       - name: Defaults
+         run: |
+           source ./scripts/travis/defaults.sh
+       - name: Install
+         run: |
+           sudo -E ./scripts/travis/install-deps.sh
+           ./scripts/travis/setup-venv.sh ~/venv
+           source ~/venv/bin/activate
+           ./scripts/travis/install-python-deps.sh
+        - name: Configure
+          run: |
+            ./scripts/travis/configure.sh
+        - name: Build
+          run: |
+            ./scripts/travis/build.sh
+        - name: Test
+          run: |
+            ./scripts/travis/test.sh
