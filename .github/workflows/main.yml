@@ -10,7 +10,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Use a build matrix to test many builds in parallel
+          # envvar defaults:
+          #   WITH_CMAKE: false
+          #   WITH_PYTHON3: false
+          #   WITH_IO: true
+          #   WITH_CUDA: false
+          #   WITH_CUDNN: false
           - BUILD_NAME: default-make
+          #   - BUILD_NAME: python3-make
+          #     WITH_PYTHON3: true
           - BUILD_NAME: no-io-make
             WITH_IO: false
           - BUILD_NAME: cuda-make
