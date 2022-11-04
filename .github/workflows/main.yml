@@ -45,6 +45,7 @@ jobs:
     env:
       NUM_THREADS: 4
     steps:
+      - uses: actions/checkout@v3
       - name: Defaults
         run: |
           source ./scripts/travis/defaults.sh
