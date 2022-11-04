@@ -17,29 +17,18 @@ apt-get install -y --no-install-recommends \
   libgoogle-glog-dev \
   libhdf5-serial-dev \
   libopenblas-dev \
-  python-virtualenv \
+  python3-virtualenv \
   wget
 
 if $WITH_CMAKE ; then
   apt-get install -y --no-install-recommends cmake
 fi
 
-if ! $WITH_PYTHON3 ; then
-  # Python2
-  apt-get install -y --no-install-recommends \
-    libprotobuf-dev \
-    protobuf-compiler \
-    python-dev \
-    python-numpy \
-    python-protobuf \
-    python-pydot \
-    python-skimage
-else
-  # Python3
-  apt-get install -y --no-install-recommends \
-    python3-dev \
-    python3-numpy \
-    python3-skimage
+# Python3
+apt-get install -y --no-install-recommends \
+  python3-dev \
+  python3-numpy \
+  python3-skimage
 
   # build Protobuf3 since it's needed for Python3
   PROTOBUF3_DIR=~/protobuf3
