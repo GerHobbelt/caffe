@@ -3,11 +3,7 @@
 mkdir -p build
 cd build
 
-ARGS="-DCMAKE_BUILD_TYPE=Release -DBLAS=Open"
-
-if $WITH_PYTHON3 ; then
-  ARGS="$ARGS -Dpython_version=3"
-fi
+ARGS="-DCMAKE_BUILD_TYPE=Release -DBLAS=Open -Dpython_version=3"
 
 if $WITH_IO ; then
   ARGS="$ARGS -DUSE_OPENCV=On -DUSE_LMDB=On -DUSE_LEVELDB=On"
@@ -29,4 +25,3 @@ else
 fi
 
 cmake .. $ARGS
-
