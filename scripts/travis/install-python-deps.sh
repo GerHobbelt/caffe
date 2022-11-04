@@ -6,5 +6,6 @@ BASEDIR=$(dirname $0)
 source $BASEDIR/defaults.sh
 
 # Python3
-pip install --pre protobuf==3.0.0b3
-pip install pydot
+pip install \
+  protobuf
+  pydot
