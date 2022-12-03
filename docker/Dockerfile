@@ -30,21 +30,20 @@ RUN apt-get install -y --no-install-recommends python-pip
 RUN apt-get install -y --no-install-recommends python-setuptools 
 RUN apt-get install -y --no-install-recommends python-scipy
 RUN apt-get install python-dev libxml2-dev libxslt-dev
-RUN rm -rf /var/lib/apt/lists/*
 
 ENV CAFFE_ROOT=/opt/caffe
 WORKDIR $CAFFE_ROOT
 
 
-RUN git clone https://github.com/SuperSecureHuman/caffe-personal  . 
-RUN git pull 
+#RUN git clone https://github.com/SuperSecureHuman/caffe-personal  . 
+#RUN git pull 
 
 
 #RUN cd python && for req in $(cat requirements.txt) pydot; do pip install $req; done
 
-RUN make -j"$(nproc)"
+#RUN make -j"$(nproc)"
 
-RUN make test -j"$(nproc)"
+#RUN make test -j"$(nproc)"
 
 
 #ENV PYCAFFE_ROOT $CAFFE_ROOT/python
