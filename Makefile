@@ -194,8 +194,9 @@ ifeq ($(USE_LMDB), 1)
 	LIBRARIES += lmdb
 endif
 # This code is taken from https://github.com/sh1r0/caffe-android-lib
+# Libraries for hdf5 is now hdf5_serial, not just hdf5
 ifeq ($(USE_HDF5), 1)
-	LIBRARIES += hdf5_hl hdf5
+	LIBRARIES += hdf5_serial_hl hdf5_serial
 endif
 ifeq ($(USE_OPENCV), 1)
 	LIBRARIES += opencv_core opencv_highgui opencv_imgproc
