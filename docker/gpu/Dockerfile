@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/cuda:9.2-cudnn7-devel
+FROM nvcr.io/nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
 
 
 ENV TZ=Asia/Kolkata
@@ -13,7 +13,6 @@ RUN apt-get install -y --no-install-recommends \
         git \
         wget \
         libatlas-base-dev \
-        libboost-all-dev \
         libgflags-dev \
         libgoogle-glog-dev \
         libhdf5-serial-dev \
@@ -23,20 +22,29 @@ RUN apt-get install -y --no-install-recommends \
         libprotobuf-dev \
         libsnappy-dev \
         protobuf-compiler \
-        python-dev \
-        python-numpy \
-        python-pip \
-        python-setuptools \
-        python-scipy
+        python3-dev \
+        python3-numpy \
+        python3-pip \
+        python3-setuptools \
+        python3-scipy
+
+RUN apt-get install -y gcc-8 g++-8 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
+
+#### Compile LIBBOOST against python3
+RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.70.0/source/boost_1_70_0.tar.gz
+RUN tar -xzf boost_1_70_0.tar.gz
+RUN cd boost_1_70_0 && ./bootstrap.sh --with-python=python3 --with-python-version=3.6
+RUN cd boost_1_70_0 && ./b2  -j16 --libdir=/usr/lib/ --includedir=/usr/include/ && ./b2 headers -j16 --libdir=/usr/lib/ --includedir=/usr/include/ && ./b2 install -j16 --libdir=/usr/lib/ --includedir=/usr/include/
+RUN ln -s /usr/lib/libboost_python36.so.1.70.0 /usr/lib/libboost_python3.so 
+RUN ldconfig
+
 
 ENV CAFFE_ROOT=/opt/caffe
 WORKDIR $CAFFE_ROOT
 
-RUN git clone https://github.com/SuperSecureHuman/caffe .
-# FIXME: use ARG instead of ENV once DockerHub supports this
-# https://github.com/docker/hub-feedback/issues/460
-#ENV CLONE_TAG=1.0
-#
+RUN git clone https://github.com/SuperSecureHuman/caffe-personal .
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 800 --slave /usr/bin/g++ g++ /usr/bin/g++-7
+
 #RUN git clone -b ${CLONE_TAG} --depth 1 https://github.com/BVLC/caffe.git . && \
 #    pip install --upgrade pip && \
 #    cd python && for req in $(cat requirements.txt) pydot; do pip install $req; done && cd .. && \
