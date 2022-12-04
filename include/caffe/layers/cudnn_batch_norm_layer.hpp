@@ -1,7 +1,9 @@
 /*
  * CuDNNBatchNorm Layer
  *
- * mainly borrow from https://github.com/hujie-frank/GENet/blob/master/include/caffe/layers/cudnn_batch_norm_layer.hpp
+ *  https://github.com/hujie-frank/GENet/blob/master/include/caffe/layers/cudnn_batch_norm_layer.hpp
+ *  https://github.com/implus/SKNet/blob/master/include/caffe/layers/cudnn_batch_norm_layer.hpp
+ *
  */
 
 #ifndef CAFFE_CUDNN_BATCH_NORM_LAYER_HPP_

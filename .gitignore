@@ -95,3 +95,4 @@ LOCK
 LOG*
 CURRENT
 MANIFEST-*
+temp.cpp

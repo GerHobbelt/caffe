@@ -13,11 +13,17 @@ line - 58
 ++  coded_input->SetTotalBytesLimit(kProtoReadBytesLimit);
 ```
 
+3. https://github.com/Qengineering/caffe - Stuff to support CUDNN latest
+
 
 
 # Custom Layers addition
 
+BatchNorm and CUDNN BatchNorm Layers from
 1. [SKNet](https://github.com/implus/SKNet)
+2. [GENet](https://github.com/hujie-frank/GENet/)
+
+
 
 
 
