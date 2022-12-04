@@ -18,3 +18,15 @@ line - 58
 # Custom Layers addition
 
 1. [SKNet](https://github.com/implus/SKNet)
+
+
+
+# Environment
+
+Arch linux
+GCC 11.2
+Anaconda Python 3.8
+Boost (version 1.80) compiled against python 3.8
+OpenCV4
+Protobuf-21.10-1
+Python-Protobuf 3.20.0
