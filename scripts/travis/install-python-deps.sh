@@ -7,5 +7,4 @@ source $BASEDIR/defaults.sh
 
 # Python3
 pip install \
-  protobuf \
   pydot
