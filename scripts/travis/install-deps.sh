@@ -17,6 +17,8 @@ apt-get install -y --no-install-recommends \
   libgoogle-glog-dev \
   libhdf5-serial-dev \
   libopenblas-dev \
+  libprotobuf-dev \
+  protobuf-compiler \
   python3-virtualenv \
   wget
 
