@@ -2,6 +2,9 @@ name: CI
 
 on: [push, pull_request, workflow_dispatch]
 
+env:
+  NUM_THREADS: 4
+
 jobs:
   build:
     name: ${{ matrix.build_name }}
@@ -17,27 +20,34 @@ jobs:
           #   WITH_CUDA: false
           #   WITH_CUDNN: false
           - BUILD_NAME: default-make
+            ENV: {}
           - BUILD_NAME: no-io-make
-            WITH_IO: false
+            ENV:
+              WITH_IO: false
           - BUILD_NAME: cuda-make
-            WITH_CUDA: true
+            ENV:
+              WITH_CUDA: true
           - BUILD_NAME: cudnn-make
-            WITH_CUDA: true
-            WITH_CUDNN: true
+            ENV:
+              WITH_CUDA: true
+              WITH_CUDNN: true
           - BUILD_NAME: default-cmake
-            WITH_CMAKE: true
+            ENV:
+              WITH_CMAKE: true
           - BUILD_NAME: no-io-cmake
-            WITH_CMAKE: true
-            WITH_IO: false
+            ENV:
+              WITH_CMAKE: true
+              WITH_IO: false
           - BUILD_NAME: cuda-cmake
-            WITH_CMAKE: true
-            WITH_CUDA: true
+            ENV:
+              WITH_CMAKE: true
+              WITH_CUDA: true
           - BUILD_NAME: cudnn-cmake
-            WITH_CMAKE: true
-            WITH_CUDA: true
-            WITH_CUDNN: true
-    env:
-      NUM_THREADS: 4
+            ENV:
+              WITH_CMAKE: true
+              WITH_CUDA: true
+              WITH_CUDNN: true
+    env: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v3
       - name: Defaults
