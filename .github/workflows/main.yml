@@ -50,9 +50,6 @@ jobs:
     env: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v3
-      - name: Defaults
-        run: |
-          source ./scripts/ci/defaults.sh
       - name: Install
         run: |
           sudo -E ./scripts/ci/install-deps.sh
