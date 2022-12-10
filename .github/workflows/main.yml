@@ -58,10 +58,13 @@ jobs:
           ./scripts/ci/install-python-deps.sh
       - name: Configure
         run: |
+          source ~/venv/bin/activate
           ./scripts/ci/configure.sh
       - name: Build
         run: |
+          source ~/venv/bin/activate
           ./scripts/ci/build.sh
       - name: Test
         run: |
+          source ~/venv/bin/activate
           ./scripts/ci/test.sh
