@@ -46,7 +46,7 @@ include(cmake/ProtoBuf.cmake)
 # This code is taken from https://github.com/sh1r0/caffe-android-lib
 if(USE_HDF5)
   find_package(HDF5 COMPONENTS HL REQUIRED)
-  include_directories(SYSTEM ${HDF5_INCLUDE_DIRS} ${HDF5_HL_INCLUDE_DIR})
+  include_directories(SYSTEM ${HDF5_INCLUDE_DIRS})
   list(APPEND Caffe_LINKER_LIBS ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
   add_definitions(-DUSE_HDF5)
 endif()
