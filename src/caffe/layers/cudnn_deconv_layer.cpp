@@ -154,7 +154,7 @@ void CuDNNDeconvolutionLayer<Dtype>::Reshape(
 
   //   // We have found that CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM is
   //   // buggy. Thus, if this algo was chosen, choose winograd instead. If
-  //   // winograd is not supported or workspace is larger than threshold, choose
+  //   // winograd is not supported or workspace is larger than threshold, choose  // NOLINT(whitespace/line_length)
   //   // implicit_gemm instead.
   //   if (fwd_algo_[i] == CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM) {
   //     size_t winograd_workspace_size;
@@ -226,7 +226,7 @@ void CuDNNDeconvolutionLayer<Dtype>::Reshape(
   //       &workspace_bwd_data_sizes_[i]));
   // }
 
-  // // reduce over all workspace sizes to get a maximum to allocate / reallocate
+  // // reduce over all workspace sizes to get a maximum to allocate / reallocate  // NOLINT(whitespace/line_length)
   // size_t total_workspace_fwd = 0;
   // size_t total_workspace_bwd_data = 0;
   // size_t total_workspace_bwd_filter = 0;
@@ -255,7 +255,7 @@ void CuDNNDeconvolutionLayer<Dtype>::Reshape(
   //   // free the existing workspace and allocate a new (larger) one
   //   cudaFree(this->workspaceData);
 
-  //   cudaError_t err = cudaMalloc(&(this->workspaceData), workspaceSizeInBytes);
+  //   cudaError_t err = cudaMalloc(&(this->workspaceData), workspaceSizeInBytes);  // NOLINT(whitespace/line_length)
   //   if (err != cudaSuccess) {
   //     // force zero memory path
   //     for (int i = 0; i < bottom.size(); i++) {
@@ -278,7 +278,7 @@ void CuDNNDeconvolutionLayer<Dtype>::Reshape(
 
   //   // if we succeed in the allocation, set pointer aliases for workspaces
   //   for (int g = 0; g < (this->group_ * CUDNN_STREAMS_PER_GROUP); g++) {
-  //     workspace[g] = reinterpret_cast<char *>(workspaceData) + g*max_workspace;
+  //     workspace[g] = reinterpret_cast<char *>(workspaceData) + g*max_workspace;  // NOLINT(whitespace/line_length)
   //   }
   // }
 
