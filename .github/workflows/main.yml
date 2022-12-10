@@ -52,19 +52,19 @@ jobs:
       - uses: actions/checkout@v3
       - name: Defaults
         run: |
-          source ./scripts/travis/defaults.sh
+          source ./scripts/ci/defaults.sh
       - name: Install
         run: |
-          sudo -E ./scripts/travis/install-deps.sh
-          ./scripts/travis/setup-venv.sh ~/venv
+          sudo -E ./scripts/ci/install-deps.sh
+          ./scripts/ci/setup-venv.sh ~/venv
           source ~/venv/bin/activate
-          ./scripts/travis/install-python-deps.sh
+          ./scripts/ci/install-python-deps.sh
       - name: Configure
         run: |
-          ./scripts/travis/configure.sh
+          ./scripts/ci/configure.sh
       - name: Build
         run: |
-          ./scripts/travis/build.sh
+          ./scripts/ci/build.sh
       - name: Test
         run: |
-          ./scripts/travis/test.sh
+          ./scripts/ci/test.sh
