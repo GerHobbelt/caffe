@@ -5,8 +5,8 @@
 BASEDIR=$(dirname $0)
 source $BASEDIR/defaults.sh
 
-apt-get -y update
-apt-get install -y --no-install-recommends \
+apt-get -yq update
+apt-get install -yq --no-install-recommends \
   build-essential \
   graphviz \
   libboost-filesystem-dev \
@@ -23,17 +23,17 @@ apt-get install -y --no-install-recommends \
   wget
 
 if $WITH_CMAKE ; then
-  apt-get install -y --no-install-recommends cmake
+  apt-get install -yq --no-install-recommends cmake
 fi
 
 # Python3
-apt-get install -y --no-install-recommends \
+apt-get install -yq --no-install-recommends \
   python3-dev \
   python3-numpy \
   python3-skimage
 
 if $WITH_IO ; then
-  apt-get install -y --no-install-recommends \
+  apt-get install -yq --no-install-recommends \
     libleveldb-dev \
     liblmdb-dev \
     libopencv-dev \
@@ -54,7 +54,7 @@ if $WITH_CUDA ; then
   fi
 
   # update package lists
-  apt-get -y update
+  apt-get -yq update
 
   # install packages
   CUDA_PKG_VERSION="7-5"
@@ -68,7 +68,7 @@ if $WITH_CUDA ; then
   ln -s /usr/local/cuda-$CUDA_VERSION /usr/local/cuda
 
   if $WITH_CUDNN ; then
-    apt-get install -y --no-install-recommends libcudnn7-dev
+    apt-get install -yq --no-install-recommends libcudnn7-dev
   fi
 fi
 
