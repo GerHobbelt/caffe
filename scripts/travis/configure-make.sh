@@ -1,9 +1,11 @@
 # raw Makefile configuration
 
 LINE () {
+  echo -e "\e[35m\e[1m$@\e[0m"
   echo "$@" >> Makefile.config
 }
 
+echo -e "\e[35m\e[1mcp Makefile.config.example Makefile.config\e[0m"
 cp Makefile.config.example Makefile.config
 
 LINE "BLAS := open"

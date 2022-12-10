@@ -1,5 +1,6 @@
 # CMake configuration
 
+echo -e "\e[35m\e[1mmkdir -p build; cd build\e[0m"
 mkdir -p build
 cd build
 
@@ -24,4 +25,5 @@ else
   ARGS="$ARGS -DUSE_CUDNN=Off"
 fi
 
+echo -e "\e[35m\e[1mcmake .. ${ARGS}\e[0m"
 cmake .. $ARGS
