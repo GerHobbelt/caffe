@@ -84,6 +84,6 @@ class TestNetSpec(unittest.TestCase):
         """Test that a TypeError is raised when a Function input isn't a Top."""
         data = L.DummyData(ntop=2)  # data is a 2-tuple of Tops
         r = r"^Silence input 0 is not a Top \(type is <(type|class) 'tuple'>\)$"
-        with self.assertRaisesRegexp(TypeError, r):
+        with self.assertRaisesRegex(TypeError, r):
             L.Silence(data, ntop=0)  # should raise: data is a tuple, not a Top
         L.Silence(*data, ntop=0)  # shouldn't raise: each elt of data is a Top
