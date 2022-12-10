@@ -28,7 +28,6 @@ WORKDIR $CAFFE_ROOT
 RUN  cd /opt && \
     git clone https://github.com/CMU-Perceptual-Computing-Lab/caffe.git && \
     cd $CAFFE_ROOT && \
-    sed -i 's/set(python_version "2"/set(python_version "3"/g' CMakeLists.txt && \
     # sed -i 's/set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall")/set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -std=c++11")/g' CMakeLists.txt && \
     # sed -i 's/cudnn.h CUDNN_VERSION_FILE_CONTENTS/cudnn_version.h CUDNN_VERSION_FILE_CONTENTS/g' cmake/Cuda.cmake && \
     mkdir build && cd build && \

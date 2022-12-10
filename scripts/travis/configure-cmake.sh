@@ -3,7 +3,7 @@
 mkdir -p build
 cd build
 
-ARGS="-DCMAKE_BUILD_TYPE=Release -DBLAS=Open -Dpython_version=3"
+ARGS="-DCMAKE_BUILD_TYPE=Release -DBLAS=Open"
 
 if $WITH_IO ; then
   ARGS="$ARGS -DUSE_OPENCV=On -DUSE_LMDB=On -DUSE_LEVELDB=On"
