@@ -19,10 +19,10 @@ jobs:
         #   WITH_CUDA: false
         #   WITH_CUDNN: false
         env:
-          - {BUILD_NAME: default-make}
-          - {BUILD_NAME: no-io-make, WITH_IO: false}
-          - {BUILD_NAME: cuda-make, WITH_CUDA: true}
-          - {BUILD_NAME: cudnn-make, WITH_CUDA: true, WITH_CUDNN: true}
+          # - {BUILD_NAME: default-make}
+          # - {BUILD_NAME: no-io-make, WITH_IO: false}
+          # - {BUILD_NAME: cuda-make, WITH_CUDA: true}
+          # - {BUILD_NAME: cudnn-make, WITH_CUDA: true, WITH_CUDNN: true}
           - {BUILD_NAME: default-cmake, WITH_CMAKE: true}
           - {BUILD_NAME: no-io-cmake, WITH_CMAKE: true, WITH_IO: false}
           - {BUILD_NAME: cuda-cmake, WITH_CMAKE: true, WITH_CUDA: true}
