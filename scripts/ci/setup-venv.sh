@@ -11,4 +11,4 @@ VENV_DIR=${1:-~/venv}
 PYTHON_EXE='/usr/bin/python3'
 
 # use --system-site-packages so that Python will use deb packages
-virtualenv $VENV_DIR -p $PYTHON_EXE --system-site-packages
+python3 -m virtualenv $VENV_DIR -p $PYTHON_EXE --system-site-packages
