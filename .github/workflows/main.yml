@@ -7,6 +7,7 @@ env:
 
 jobs:
   build:
+    name: $BUILD_NAME - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -18,14 +19,14 @@ jobs:
         #   WITH_CUDA: false
         #   WITH_CUDNN: false
         env:
-          - {}
-          - {WITH_IO: false}
-          - {WITH_CUDA: true}
-          - {WITH_CUDA: true, WITH_CUDNN: true}
-          - {WITH_CMAKE: true}
-          - {WITH_CMAKE: true, WITH_IO: false}
-          - {WITH_CMAKE: true, WITH_CUDA: true}
-          - {WITH_CMAKE: true, WITH_CUDA: true, WITH_CUDNN: true}
+          - {BUILD_NAME: default-make}
+          - {BUILD_NAME: no-io-make, WITH_IO: false}
+          - {BUILD_NAME: cuda-make, WITH_CUDA: true}
+          - {BUILD_NAME: cudnn-make, WITH_CUDA: true, WITH_CUDNN: true}
+          - {BUILD_NAME: default-cmake, WITH_CMAKE: true}
+          - {BUILD_NAME: no-io-cmake, WITH_CMAKE: true, WITH_IO: false}
+          - {BUILD_NAME: cuda-cmake, WITH_CMAKE: true, WITH_CUDA: true}
+          - {BUILD_NAME: cudnn-cmake, WITH_CMAKE: true, WITH_CUDA: true, WITH_CUDNN: true}
     env: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v3
