@@ -7,46 +7,26 @@ env:
 
 jobs:
   build:
-    name: ${{ matrix.build_name }}
-    runs-on: ubuntu-20.04
+    name: ${{ matrix.env.BUILD_NAME }} - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Use a build matrix to test many builds in parallel
-          # envvar defaults:
-          #   WITH_CMAKE: false
-          #   WITH_IO: true
-          #   WITH_CUDA: false
-          #   WITH_CUDNN: false
-          - BUILD_NAME: default-make
-            ENV: {}
-          - BUILD_NAME: no-io-make
-            ENV:
-              WITH_IO: false
-          - BUILD_NAME: cuda-make
-            ENV:
-              WITH_CUDA: true
-          - BUILD_NAME: cudnn-make
-            ENV:
-              WITH_CUDA: true
-              WITH_CUDNN: true
-          - BUILD_NAME: default-cmake
-            ENV:
-              WITH_CMAKE: true
-          - BUILD_NAME: no-io-cmake
-            ENV:
-              WITH_CMAKE: true
-              WITH_IO: false
-          - BUILD_NAME: cuda-cmake
-            ENV:
-              WITH_CMAKE: true
-              WITH_CUDA: true
-          - BUILD_NAME: cudnn-cmake
-            ENV:
-              WITH_CMAKE: true
-              WITH_CUDA: true
-              WITH_CUDNN: true
+        os: [ubuntu-18.04, ubuntu-20.04]
+        # envvar defaults:
+        #   WITH_CMAKE: false
+        #   WITH_IO: true
+        #   WITH_CUDA: false
+        #   WITH_CUDNN: false
+        env:
+          - {BUILD_NAME: default-make}
+          - {BUILD_NAME: no-io-make, WITH_IO: false}
+          - {BUILD_NAME: cuda-make, WITH_CUDA: true}
+          - {BUILD_NAME: cudnn-make, WITH_CUDA: true, WITH_CUDNN: true}
+          - {BUILD_NAME: default-cmake, WITH_CMAKE: true}
+          - {BUILD_NAME: no-io-cmake, WITH_CMAKE: true, WITH_IO: false}
+          - {BUILD_NAME: cuda-cmake, WITH_CMAKE: true, WITH_CUDA: true}
+          - {BUILD_NAME: cudnn-cmake, WITH_CMAKE: true, WITH_CUDA: true, WITH_CUDNN: true}
     env: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v3
