@@ -97,7 +97,7 @@ message BatchSampler {
   // Constraints for determining if a sampled bbox is positive or negative.
   optional SampleConstraint sample_constraint = 3;
 
-  // If provided, break when found certain number of samples satisfing the
+  // If provided, break when found certain number of samples satisfying the
   // sample_constraint.
   optional uint32 max_sample = 4;
 
@@ -212,7 +212,7 @@ message NetParameter {
 // NOTE
 // Update the next available ID when you add a new SolverParameter field.
 //
-// SolverParameter next available ID: 44 (last added: plateau_winsize)
+// SolverParameter next available ID: 47 (last added: weights)
 message SolverParameter {
   //////////////////////////////////////////////////////////////////////////////
   // Specifying the train and test networks
@@ -373,7 +373,7 @@ message SolverParameter {
   optional SolverType solver_type = 30 [default = SGD];
 
   // Overlap compute and communication for data parallel training
-  optional bool layer_wise_reduce = 41 [default = true];
+  optional bool layer_wise_reduce = 45 [default = true];
 
   // Path to caffemodel file(s) with pretrained weights to initialize finetuning.
   // Tha same as command line --weights parameter for caffe train command.
@@ -383,7 +383,7 @@ message SolverParameter {
   // If several model files are expected, they can be listed in a one 
   // weights parameter separated by ',' (like in a command string) or
   // in repeated weights parameters separately.
-  repeated string weights = 42;
+  repeated string weights = 46;
 }
 
 // A message that stores the solver snapshots
