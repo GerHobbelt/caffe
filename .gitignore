@@ -32,6 +32,7 @@
 # Editor temporaries
 *.swp
 *~
+*.bak
 
 # Sublime Text settings
 *.sublime-workspace
