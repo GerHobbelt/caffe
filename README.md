@@ -40,6 +40,7 @@ Makefile.config.JetsonNano adapted for Jetson TX2 (Thanks to [@henudwj](https://
 [![License](https://img.shields.io/badge/license-BSD-blue.svg)](LICENSE)
 
 By [Wei Liu](http://www.cs.unc.edu/~wliu/), [Dragomir Anguelov](https://www.linkedin.com/in/dragomiranguelov), [Dumitru Erhan](http://research.google.com/pubs/DumitruErhan.html), [Christian Szegedy](http://research.google.com/pubs/ChristianSzegedy.html), [Scott Reed](http://www-personal.umich.edu/~reedscot/), [Cheng-Yang Fu](http://www.cs.unc.edu/~cyfu/), [Alexander C. Berg](http://acberg.com).
+- [Windows Caffe](https://github.com/BVLC/caffe/tree/windows)
 
 ### Introduction
 

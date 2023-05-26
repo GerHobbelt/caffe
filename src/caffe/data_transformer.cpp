@@ -156,7 +156,7 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
                                        Blob<Dtype>* transformed_blob,
                                        NormalizedBBox* crop_bbox,
                                        bool* do_mirror) {
-  // If datum is encoded, decoded and transform the cv::image.
+  // If datum is encoded, decode and transform the cv::image.
   if (datum.encoded()) {
 #ifdef USE_OPENCV
     CHECK(!(param_.force_color() && param_.force_gray()))
@@ -677,8 +677,8 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   crop_bbox->set_ymax(Dtype(h_off + height) / img_height);
 
   if (has_mean_file) {
-    CHECK_EQ(cv_cropped_image.rows, data_mean_.height());
-    CHECK_EQ(cv_cropped_image.cols, data_mean_.width());
+    CHECK_EQ(img_height, data_mean_.height());
+    CHECK_EQ(img_width, data_mean_.width());
   }
   CHECK(cv_cropped_image.data);
 
