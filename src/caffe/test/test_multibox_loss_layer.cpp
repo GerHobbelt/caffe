@@ -68,7 +68,9 @@ class MultiBoxLossLayerTest : public MultiDeviceTest<TypeParam> {
                 num_, num_priors_ * num_classes_, 1, 1)),
         blob_bottom_prior_(new Blob<Dtype>(num_, 2, num_priors_ * 4, 1)),
         blob_bottom_gt_(new Blob<Dtype>(1, 1, 4, 8)),
-        blob_top_loss_(new Blob<Dtype>()) {
+        blob_top_loss_(new Blob<Dtype>()),
+        anno_data_layer_(NULL)
+  {
     blob_bottom_vec_.push_back(blob_bottom_loc_);
     blob_bottom_vec_.push_back(blob_bottom_conf_);
     blob_bottom_vec_.push_back(blob_bottom_prior_);
@@ -81,6 +83,9 @@ class MultiBoxLossLayerTest : public MultiDeviceTest<TypeParam> {
     delete blob_bottom_conf_;
     delete blob_bottom_gt_;
     delete blob_top_loss_;
+    if (anno_data_layer_) {
+        delete anno_data_layer_;
+    }
   }
 
   void FillItem(Dtype* blob_data, const string values) {
@@ -174,20 +179,25 @@ class MultiBoxLossLayerTest : public MultiDeviceTest<TypeParam> {
     data_param->set_batch_size(num_);
     data_param->set_source(filename.c_str());
     data_param->set_backend(backend);
-    AnnotatedDataLayer<Dtype> anno_data_layer(layer_param);
+//    AnnotatedDataLayer<Dtype> anno_data_layer(layer_param);
+    if (anno_data_layer_)
+        delete anno_data_layer_;
+    anno_data_layer_ = new AnnotatedDataLayer<Dtype>(layer_param);
+
+    fake_bottom_vec.clear();
     fake_top_vec.clear();
     fake_top_vec.push_back(fake_input);
     fake_top_vec.push_back(blob_bottom_gt_);
-    anno_data_layer.SetUp(fake_bottom_vec, fake_top_vec);
-    anno_data_layer.Forward(fake_bottom_vec, fake_top_vec);
+    anno_data_layer_->SetUp(fake_bottom_vec, fake_top_vec);
+    anno_data_layer_->Forward(fake_bottom_vec, fake_top_vec);
 #else
     FillerParameter filler_param;
     GaussianFiller<Dtype> filler(filler_param);
     filler.Fill(fake_input);
-    vector<int> gt_shape(4, 1);
-    gt_shape[2] = 4;
-    gt_shape[3] = 8;
-    blob_bottom_gt_->Reshape(gt_shape);
+//    vector<int> gt_shape(4, 1);
+//    gt_shape[2] = 4;
+//    gt_shape[3] = 8;
+//    blob_bottom_gt_->Reshape(gt_shape);
     Dtype* gt_data = blob_bottom_gt_->mutable_cpu_data();
     FillItem(gt_data, "0 1 0 0.1 0.1 0.3 0.3 0");
     FillItem(gt_data + 8, "2 1 0 0.1 0.1 0.3 0.3 0");
@@ -322,6 +332,7 @@ class MultiBoxLossLayerTest : public MultiDeviceTest<TypeParam> {
   Blob<Dtype>* const blob_top_loss_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
+  AnnotatedDataLayer<Dtype>* anno_data_layer_;
 };
 
 TYPED_TEST_CASE(MultiBoxLossLayerTest, TestDtypesAndDevices);
