@@ -4,7 +4,7 @@ Form a subset of the Flickr Style data, download images to dirname, and write
 Caffe ImagesDataLayer training file.
 """
 import os
-import urllib
+import urllib.request
 import hashlib
 import argparse
 import numpy as np
@@ -25,8 +25,8 @@ def download_image(args_tuple):
     try:
         url, filename = args_tuple
         if not os.path.exists(filename):
-            urllib.urlretrieve(url, filename)
-        with open(filename) as f:
+            urllib.request.urlretrieve(url, filename)
+        with open(filename, "br") as f:
             assert hashlib.sha1(f.read()).hexdigest() != MISSING_IMAGE_SHA1
         test_read_image = io.imread(filename)
         return True
