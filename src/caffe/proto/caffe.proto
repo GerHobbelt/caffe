@@ -571,6 +571,8 @@ message TransformationParameter {
   optional float scale = 1 [default = 1];
   // Specify if we want to randomly mirror data.
   optional bool mirror = 2 [default = false];
+  // Specify if we want to randomly rotate data by 90 degrees.
+  optional bool rotate_90 = 15 [default = false];
   // Specify if we would like to randomly crop an image.
   optional uint32 crop_size = 3 [default = 0];
   optional uint32 crop_h = 11 [default = 0];

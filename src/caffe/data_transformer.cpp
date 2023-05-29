@@ -51,7 +51,7 @@ template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const Datum& datum,
                                        Dtype* transformed_data,
                                        NormalizedBBox* crop_bbox,
-                                       bool* do_mirror) {
+                                       bool* do_mirror, int* do_rotate90) {
   const string& data = datum.data();
   const int datum_channels = datum.channels();
   const int datum_height = datum.height();
@@ -60,6 +60,7 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
   const int crop_size = param_.crop_size();
   const Dtype scale = param_.scale();
   *do_mirror = param_.mirror() && Rand(2);
+  *do_rotate90 = 0;     // not supported for anything other than images
   const bool has_mean_file = param_.has_mean_file();
   const bool has_uint8 = data.size() > 0;
   const bool has_mean_values = mean_values_.size() > 0;
@@ -148,14 +149,15 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
                                        Dtype* transformed_data) {
   NormalizedBBox crop_bbox;
   bool do_mirror;
-  Transform(datum, transformed_data, &crop_bbox, &do_mirror);
+  int do_rotate90;
+  Transform(datum, transformed_data, &crop_bbox, &do_mirror, &do_rotate90);
 }
 
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const Datum& datum,
                                        Blob<Dtype>* transformed_blob,
                                        NormalizedBBox* crop_bbox,
-                                       bool* do_mirror) {
+                                       bool* do_mirror, int* do_rotate90) {
   // If datum is encoded, decode and transform the cv::image.
   if (datum.encoded()) {
 #ifdef USE_OPENCV
@@ -169,7 +171,7 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
       cv_img = DecodeDatumToCVMatNative(datum);
     }
     // Transform the cv::image into blob.
-    return Transform(cv_img, transformed_blob, crop_bbox, do_mirror);
+    return Transform(cv_img, transformed_blob, crop_bbox, do_mirror, do_rotate90);
 #else
     LOG(FATAL) << "Encoded datum requires OpenCV; compile with USE_OPENCV.";
 #endif  // USE_OPENCV
@@ -204,7 +206,7 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
   }
 
   Dtype* transformed_data = transformed_blob->mutable_cpu_data();
-  Transform(datum, transformed_data, crop_bbox, do_mirror);
+  Transform(datum, transformed_data, crop_bbox, do_mirror, do_rotate90);
 }
 
 template<typename Dtype>
@@ -212,7 +214,8 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
                                        Blob<Dtype>* transformed_blob) {
   NormalizedBBox crop_bbox;
   bool do_mirror;
-  Transform(datum, transformed_blob, &crop_bbox, &do_mirror);
+  int do_rotate90;
+  Transform(datum, transformed_blob, &crop_bbox, &do_mirror, &do_rotate90);
 }
 
 template<typename Dtype>
@@ -239,15 +242,15 @@ template<typename Dtype>
 void DataTransformer<Dtype>::Transform(
     const AnnotatedDatum& anno_datum, Blob<Dtype>* transformed_blob,
     RepeatedPtrField<AnnotationGroup>* transformed_anno_group_all,
-    bool* do_mirror) {
+    bool* do_mirror, int* do_rotate90) {
   // Transform datum.
   const Datum& datum = anno_datum.datum();
   NormalizedBBox crop_bbox;
-  Transform(datum, transformed_blob, &crop_bbox, do_mirror);
+  Transform(datum, transformed_blob, &crop_bbox, do_mirror, do_rotate90);
 
   // Transform annotation.
   const bool do_resize = true;
-  TransformAnnotation(anno_datum, do_resize, crop_bbox, *do_mirror,
+  TransformAnnotation(anno_datum, do_resize, crop_bbox, *do_mirror, *do_rotate90,
                       transformed_anno_group_all);
 }
 
@@ -256,17 +259,18 @@ void DataTransformer<Dtype>::Transform(
     const AnnotatedDatum& anno_datum, Blob<Dtype>* transformed_blob,
     RepeatedPtrField<AnnotationGroup>* transformed_anno_group_all) {
   bool do_mirror;
+  int do_rotate90;
   Transform(anno_datum, transformed_blob, transformed_anno_group_all,
-            &do_mirror);
+            &do_mirror, &do_rotate90);
 }
 
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(
     const AnnotatedDatum& anno_datum, Blob<Dtype>* transformed_blob,
-    vector<AnnotationGroup>* transformed_anno_vec, bool* do_mirror) {
+    vector<AnnotationGroup>* transformed_anno_vec, bool* do_mirror, int* do_rotate90) {
   RepeatedPtrField<AnnotationGroup> transformed_anno_group_all;
   Transform(anno_datum, transformed_blob, &transformed_anno_group_all,
-            do_mirror);
+            do_mirror, do_rotate90);
   for (int g = 0; g < transformed_anno_group_all.size(); ++g) {
     transformed_anno_vec->push_back(transformed_anno_group_all.Get(g));
   }
@@ -277,13 +281,14 @@ void DataTransformer<Dtype>::Transform(
     const AnnotatedDatum& anno_datum, Blob<Dtype>* transformed_blob,
     vector<AnnotationGroup>* transformed_anno_vec) {
   bool do_mirror;
-  Transform(anno_datum, transformed_blob, transformed_anno_vec, &do_mirror);
+  int do_rotate90;
+  Transform(anno_datum, transformed_blob, transformed_anno_vec, &do_mirror, &do_rotate90);
 }
 
 template<typename Dtype>
 void DataTransformer<Dtype>::TransformAnnotation(
     const AnnotatedDatum& anno_datum, const bool do_resize,
-    const NormalizedBBox& crop_bbox, const bool do_mirror,
+    const NormalizedBBox& crop_bbox, const bool do_mirror, const int do_rotate90,
     RepeatedPtrField<AnnotationGroup>* transformed_anno_group_all) {
   const int img_height = anno_datum.datum().height();
   const int img_width = anno_datum.datum().width();
@@ -305,11 +310,38 @@ void DataTransformer<Dtype>::TransformAnnotation(
           UpdateBBoxByResizePolicy(param_.resize_param(), img_width, img_height,
                                    &resize_bbox);
         }
+
+        if (do_rotate90) {
+          Dtype xmin = resize_bbox.xmin(), xmax = resize_bbox.xmax();
+          Dtype ymin = resize_bbox.ymin(), ymax = resize_bbox.ymax();
+          switch (do_rotate90) {
+          case 1:     //cv::ROTATE_90_CLOCKWISE
+            resize_bbox.set_xmin(1 - ymax);
+            resize_bbox.set_xmax(1 - ymin);
+            resize_bbox.set_ymin(xmin);
+            resize_bbox.set_ymax(xmax);
+            break;
+          case 2:     //cv::ROTATE_180
+            resize_bbox.set_xmin(1 - xmax);
+            resize_bbox.set_xmax(1 - xmin);
+            resize_bbox.set_ymin(1 - ymax);
+            resize_bbox.set_ymax(1 - ymin);
+            break;
+          case 3:     //cv::ROTATE_90_COUNTERCLOCKWISE
+            resize_bbox.set_xmin(ymin);
+            resize_bbox.set_xmax(ymax);
+            resize_bbox.set_ymin(1 - xmax);
+            resize_bbox.set_ymax(1 - xmin);
+            break;
+          }
+        }
+
         if (param_.has_emit_constraint() &&
             !MeetEmitConstraint(crop_bbox, resize_bbox,
                                 param_.emit_constraint())) {
           continue;
         }
+
         NormalizedBBox proj_bbox;
         if (ProjectBBox(crop_bbox, resize_bbox, &proj_bbox)) {
           has_valid_annotation = true;
@@ -420,9 +452,10 @@ void DataTransformer<Dtype>::CropImage(const AnnotatedDatum& anno_datum,
   // Transform the annotation according to crop_bbox.
   const bool do_resize = false;
   const bool do_mirror = false;
+  const int do_rotate90 = 0;
   NormalizedBBox crop_bbox;
   ClipBBox(bbox, &crop_bbox);
-  TransformAnnotation(anno_datum, do_resize, crop_bbox, do_mirror,
+  TransformAnnotation(anno_datum, do_resize, crop_bbox, do_mirror, do_rotate90,
                       cropped_anno_datum->mutable_annotation_group());
 }
 
@@ -531,7 +564,8 @@ void DataTransformer<Dtype>::ExpandImage(const AnnotatedDatum& anno_datum,
   // Transform the annotation according to crop_bbox.
   const bool do_resize = false;
   const bool do_mirror = false;
-  TransformAnnotation(anno_datum, do_resize, expand_bbox, do_mirror,
+  const int do_rotate90 = 0;
+  TransformAnnotation(anno_datum, do_resize, expand_bbox, do_mirror, do_rotate90,
                       expanded_anno_datum->mutable_annotation_group());
 }
 
@@ -593,7 +627,7 @@ template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
                                        Blob<Dtype>* transformed_blob,
                                        NormalizedBBox* crop_bbox,
-                                       bool* do_mirror) {
+                                       bool* do_mirror, int* do_rotate90) {
   // Check dimensions.
   const int img_channels = cv_img.channels();
   const int channels = transformed_blob->channels();
@@ -609,6 +643,7 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   const int crop_size = param_.crop_size();
   const Dtype scale = param_.scale();
   *do_mirror = param_.mirror() && Rand(2);
+  *do_rotate90 = param_.rotate_90() ? int(Rand(4)) : 0;
   const bool has_mean_file = param_.has_mean_file();
   const bool has_mean_values = mean_values_.size() > 0;
 
@@ -635,17 +670,28 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
     crop_w = crop_size;
   }
 
-  cv::Mat cv_resized_image, cv_noised_image, cv_cropped_image;
+  cv::Mat cv_resized_image, cv_rotated_image, cv_noised_image, cv_cropped_image;
   if (param_.has_resize_param()) {
     cv_resized_image = ApplyResize(cv_img, param_.resize_param());
   } else {
     cv_resized_image = cv_img;
   }
-  if (param_.has_noise_param()) {
-    cv_noised_image = ApplyNoise(cv_resized_image, param_.noise_param());
+
+  if (*do_rotate90) {
+    cv::rotate(cv_resized_image, cv_rotated_image,
+               *do_rotate90 == 1 ? cv::ROTATE_90_CLOCKWISE
+               : *do_rotate90 == 2 ? cv::ROTATE_180
+               : cv::ROTATE_90_COUNTERCLOCKWISE);
   } else {
-    cv_noised_image = cv_resized_image;
+    cv_rotated_image = cv_resized_image;
   }
+
+  if (param_.has_noise_param()) {
+    cv_noised_image = ApplyNoise(cv_rotated_image, param_.noise_param());
+  } else {
+    cv_noised_image = cv_rotated_image;
+  }
+
   int img_height = cv_noised_image.rows;
   int img_width = cv_noised_image.cols;
   CHECK_GE(img_height, crop_h);
@@ -794,7 +840,8 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
                                        Blob<Dtype>* transformed_blob) {
   NormalizedBBox crop_bbox;
   bool do_mirror;
-  Transform(cv_img, transformed_blob, &crop_bbox, &do_mirror);
+  int do_rotate90;
+  Transform(cv_img, transformed_blob, &crop_bbox, &do_mirror, &do_rotate90);
 }
 
 template <typename Dtype>
@@ -1108,7 +1155,7 @@ vector<int> DataTransformer<Dtype>::InferBlobShape(
 
 template <typename Dtype>
 void DataTransformer<Dtype>::InitRand() {
-  const bool needs_rand = param_.mirror() ||
+  const bool needs_rand = param_.mirror() || param_.rotate_90() ||
       (phase_ == TRAIN && param_.crop_size());
   if (needs_rand) {
     const unsigned int rng_seed = caffe_rng_rand();

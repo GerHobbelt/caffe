@@ -1,4 +1,7 @@
 import sys
+
+import matplotlib.pyplot as plt
+
 import caffe
 import os
 import os.path
@@ -173,6 +176,7 @@ def main():
     batch_index = 8
     image = style_data_batch[batch_index]
     plt.imshow(deprocess_net_image(image))
+    plt.show()
     print('actual label =', style_labels[style_label_batch[batch_index]])
 
     disp_imagenet_preds(imagenet_net, image)
@@ -230,7 +234,7 @@ def main():
         # Snapshots are files used to store networks we've trained.  Here, we'll
         # snapshot every 10K iterations -- ten times during training.
         s.snapshot = 10000
-        s.snapshot_prefix = caffe_root + 'models/finetune_flickr_style/finetune_flickr_style'
+        s.snapshot_prefix = os.path.join(caffe_root, 'models/finetune_flickr_style/finetune_flickr_style')
 
         # Train on the GPU.  Using the CPU to train large networks is very slow.
         s.solver_mode = caffe_pb2.SolverParameter.GPU
@@ -342,6 +346,25 @@ def main():
     # Delete solvers to save memory.
     del style_solver, scratch_style_solver, solvers
 
+    test_net, accuracy = eval_style_net(style_weights_ft)
+    print('Accuracy, finetuned from ImageNet initialization: %3.1f%%' % (100 * accuracy,))
+    scratch_test_net, scratch_accuracy = eval_style_net(scratch_style_weights_ft)
+    print('Accuracy, finetuned from   random initialization: %3.1f%%' % (100 * scratch_accuracy,))
+
+    plt.imshow(deprocess_net_image(image))
+    disp_style_preds(test_net, image)
+    plt.show()
+
+    batch_index = 1
+    image = test_net.blobs['data'].data[batch_index]
+    plt.imshow(deprocess_net_image(image))
+    plt.show()
+    print('actual label =', style_labels[int(test_net.blobs['label'].data[batch_index])])
+
+    disp_style_preds(test_net, image)
+    disp_style_preds(scratch_test_net, image)
+    disp_imagenet_preds(imagenet_net, image)
+    
 
 
 if __name__ == "__main__":

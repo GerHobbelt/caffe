@@ -72,11 +72,11 @@ class DataTransformer {
   void Transform(const AnnotatedDatum& anno_datum,
                  Blob<Dtype>* transformed_blob,
                  RepeatedPtrField<AnnotationGroup>* transformed_anno_vec,
-                 bool* do_mirror);
+                 bool* do_mirror, int* do_rotate90);
   void Transform(const AnnotatedDatum& anno_datum,
                  Blob<Dtype>* transformed_blob,
                  vector<AnnotationGroup>* transformed_anno_vec,
-                 bool* do_mirror);
+                     bool* do_mirror, int* do_rotate90);
   void Transform(const AnnotatedDatum& anno_datum,
                  Blob<Dtype>* transformed_blob,
                  vector<AnnotationGroup>* transformed_anno_vec);
@@ -93,12 +93,14 @@ class DataTransformer {
    *    The cropped region applied to anno_datum.datum()
    * @param do_mirror
    *    If true, meaning the datum has mirrored.
+   * @param do_rotate90
+   *    If true, randomly rotate the datum by a multiple of 90 degrees.
    * @param transformed_anno_group_all
    *    Stores all transformed AnnotationGroup.
    */
   void TransformAnnotation(
       const AnnotatedDatum& anno_datum, const bool do_resize,
-      const NormalizedBBox& crop_bbox, const bool do_mirror,
+      const NormalizedBBox& crop_bbox, const bool do_mirror, const int do_rotate90,
       RepeatedPtrField<AnnotationGroup>* transformed_anno_group_all);
 
   /**
@@ -155,7 +157,7 @@ class DataTransformer {
    *    set_cpu_data() is used. See image_data_layer.cpp for an example.
    */
   void Transform(const cv::Mat& cv_img, Blob<Dtype>* transformed_blob,
-                 NormalizedBBox* crop_bbox, bool* do_mirror);
+                 NormalizedBBox* crop_bbox, bool* do_mirror, int* do_rotate90);
   void Transform(const cv::Mat& cv_img, Blob<Dtype>* transformed_blob);
 
   /**
@@ -238,7 +240,7 @@ class DataTransformer {
 
   // Transform and return the transformation information.
   void Transform(const Datum& datum, Dtype* transformed_data,
-                 NormalizedBBox* crop_bbox, bool* do_mirror);
+                 NormalizedBBox* crop_bbox, bool* do_mirror, int* do_rotate90);
   void Transform(const Datum& datum, Dtype* transformed_data);
 
   /**
@@ -246,7 +248,7 @@ class DataTransformer {
    * transform_param block to the data and return transform information.
    */
   void Transform(const Datum& datum, Blob<Dtype>* transformed_blob,
-                 NormalizedBBox* crop_bbox, bool* do_mirror);
+                 NormalizedBBox* crop_bbox, bool* do_mirror, int* do_rotate90);
 
   // Tranformation parameters
   TransformationParameter param_;

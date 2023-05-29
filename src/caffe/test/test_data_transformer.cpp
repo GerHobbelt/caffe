@@ -430,9 +430,10 @@ TYPED_TEST(DataTransformTest, TestRichLabelCropMirror) {
   DataTransformer<TypeParam> transformer(transform_param, TEST);
   transformer.InitRand();
   bool do_mirror;
+  int do_rotate90;
   for (int iter = 0; iter < 10; ++iter) {
     vector<AnnotationGroup> transformed_anno_vec;
-    transformer.Transform(anno_datum, &blob, &transformed_anno_vec, &do_mirror);
+    transformer.Transform(anno_datum, &blob, &transformed_anno_vec, &do_mirror, &do_rotate90);
 
     EXPECT_EQ(transformed_anno_vec.size(), 1);
     AnnotationGroup& anno_group = transformed_anno_vec[0];
