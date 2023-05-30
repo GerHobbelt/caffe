@@ -74,6 +74,9 @@ class Solver {
   }
   int iter() const { return iter_; }
 
+  int test_iter() const { return test_iter_; }
+  const vector<Dtype>& test_outputs() const { return test_outputs_; }
+
   // Invoked at specific points during an iteration
   class Callback {
    protected:
@@ -118,6 +121,8 @@ class Solver {
   vector<shared_ptr<Net<Dtype> > > test_nets_;
   vector<Callback*> callbacks_;
   vector<Dtype> losses_;
+  int test_iter_;
+  vector<Dtype> test_outputs_;
   Dtype smoothed_loss_;
 
   // A function that can be set by a client of the Solver to provide indication

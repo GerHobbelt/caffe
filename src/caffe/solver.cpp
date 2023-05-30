@@ -60,6 +60,7 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
     LOG(INFO) << "Solver scaffolding done.";
   }
   iter_ = 0;
+  test_iter_ = -1;
   current_step_ = 0;
 }
 
@@ -409,6 +410,9 @@ void Solver<Dtype>::TestClassification(const int test_net_id) {
     loss /= param_.test_iter(test_net_id);
     LOG(INFO) << "Test loss: " << loss;
   }
+
+  test_iter_ = iter_;
+  test_outputs_.clear();
   for (int i = 0; i < test_score.size(); ++i) {
     const int output_blob_index =
         test_net->output_blob_indices()[test_score_output_id[i]];
@@ -422,6 +426,7 @@ void Solver<Dtype>::TestClassification(const int test_net_id) {
     }
     LOG(INFO) << "    Test net output #" << i << ": " << output_name << " = "
               << mean_score << loss_msg_stream.str();
+    test_outputs_.push_back(mean_score);
   }
 }
 
@@ -496,6 +501,9 @@ void Solver<Dtype>::TestDetection(const int test_net_id) {
     loss /= param_.test_iter(test_net_id);
     LOG(INFO) << "Test loss: " << loss;
   }
+
+  test_iter_ = iter_;
+  test_outputs_.clear();
   for (int i = 0; i < all_true_pos.size(); ++i) {
     if (all_true_pos.find(i) == all_true_pos.end()) {
       LOG(FATAL) << "Missing output_blob true_pos: " << i;
@@ -512,7 +520,7 @@ void Solver<Dtype>::TestDetection(const int test_net_id) {
     }
     const map<int, int>& num_pos = all_num_pos.find(i)->second;
     map<int, float> APs;
-    float mAP = 0.;
+    Dtype mAP = 0.;
     // Sort true_pos and false_pos with descend scores.
     for (map<int, int>::const_iterator it = num_pos.begin();
          it != num_pos.end(); ++it) {
@@ -543,6 +551,7 @@ void Solver<Dtype>::TestDetection(const int test_net_id) {
     const string& output_name = test_net->blob_names()[output_blob_index];
     LOG(INFO) << "    Test net output #" << i << ": " << output_name << " = "
               << mAP;
+    test_outputs_.push_back(mAP);
   }
 }
 
