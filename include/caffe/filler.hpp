@@ -242,6 +242,10 @@ Note that the learning rate and the
 weight decay are set to 0 in order to keep coefficient values of bilinear
 interpolation unchanged during training. If you apply this to an image, this
 operation is equivalent to the following call in Python with Scikit.Image.
+
+By default, the filter is normalized such that the maximum weight is 1 (for the
+central pixel of an odd-numbered filter). Optionally, setting the variance_norm
+option to FAN_OUT will normalize the filter so that the sum of all weights is 1.
 \code{.py}
 out = skimage.transform.rescale(img, factor, mode='constant', cval=0)
 \endcode
@@ -254,16 +258,21 @@ class BilinearFiller : public Filler<Dtype> {
   virtual void Fill(Blob<Dtype>* blob) {
     CHECK_EQ(blob->num_axes(), 4) << "Blob must be 4 dim.";
     CHECK_EQ(blob->width(), blob->height()) << "Filter must be square";
+    CHECK_EQ(this->filler_param_.sparse(), -1)
+         << "Sparsity not supported by this Filler.";
+
     Dtype* data = blob->mutable_cpu_data();
     int f = ceil(blob->width() / 2.);
     Dtype c = (blob->width() - 1) / (2. * f);
+    Dtype w = 1;
+    if (this->filler_param_.variance_norm() == FillerParameter_VarianceNorm_FAN_OUT) {
+      w = 1.0 / f / f;
+    }
     for (int i = 0; i < blob->count(); ++i) {
       Dtype x = i % blob->width();
       Dtype y = (i / blob->width()) % blob->height();
-      data[i] = (1 - fabs(x / f - c)) * (1 - fabs(y / f - c));
+      data[i] = w * (1 - fabs(x / f - c)) * (1 - fabs(y / f - c));
     }
-    CHECK_EQ(this->filler_param_.sparse(), -1)
-         << "Sparsity not supported by this Filler.";
   }
 };
 

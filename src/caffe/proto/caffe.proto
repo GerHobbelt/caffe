@@ -167,6 +167,10 @@ message FillerParameter {
   optional int32 sparse = 7 [default = -1];
   // Normalize the filler variance by fan_in, fan_out, or their average.
   // Applies to 'xavier' and 'msra' fillers.
+  // For the 'bilinear' filter, fan_out can be specified to normalize
+  // the filter weights such that they sum to 1. Otherwise (by default),
+  // the filter is normalized such that the maximum weight is 1 (for the
+  //central pixel of an odd-numbered filter).
   enum VarianceNorm {
     FAN_IN = 0;
     FAN_OUT = 1;
