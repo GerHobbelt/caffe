@@ -71,7 +71,10 @@ def assign_proto(proto, name, val):
                 for k, v in six.iteritems(item):
                     assign_proto(proto_item, k, v)
         else:
-            getattr(proto, name).extend(val)
+            try:
+                getattr(proto, name).extend(val)
+            except TypeError:
+                getattr(proto, name).extend(map(int, val))
     elif isinstance(val, dict):
         for k, v in six.iteritems(val):
             assign_proto(getattr(proto, name), k, v)

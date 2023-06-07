@@ -8,7 +8,7 @@ import shutil
 import stat
 import subprocess
 import sys
-sys.path.append('/home/super/workspace/zuoxin/CAFFE_SSD/python/')
+# sys.path.append('/home/super/workspace/zuoxin/CAFFE_SSD/python/')
 
 import caffe
 from caffe import layers as L
@@ -16,6 +16,13 @@ from caffe import params as P
 from caffe.proto import caffe_pb2
 from caffe.model_libs import *
 from google.protobuf import text_format
+
+
+def InterpolationLayer(net, from_layer, out_layer, output_shape):
+    input_layer = net[from_layer]
+    L.Convolution()
+
+
 # Add extra layers on top of a "base" network (e.g. VGGNet or Inception).
 def AddExtraLayers(net, use_batchnorm=False, lr_mult=1):
     use_relu = True
@@ -52,8 +59,11 @@ def AddExtraLayers(net, use_batchnorm=False, lr_mult=1):
     ConvBNLayer(net, from_layer, out_layer, use_batchnorm, use_relu, 256, 3, 1, 2,lr_mult = lr_mult)
     ConvBNLayer(net, "fc7",  "fc7_reduce", use_batchnorm, use_relu, 256, 1, 0, 1,
         lr_mult=lr_mult)
-    net['fc7_us'] = L.Interp(net['fc7_reduce'],interp_param={'height':38,'width':38})
-    net['conv7_2_us'] = L.Interp(net['conv7_2'],interp_param={'height':38,'width':38})   
+    # net['fc7_us'] = L.Interp(net['fc7_reduce'],interp_param={'height':38,'width':38})
+    # net['conv7_2_us'] = L.Interp(net['conv7_2'],interp_param={'height':38,'width':38})
+
+    InterpolationLayer(net, 'fc7_reduce', 'fc7_us', output_shape=[38, 38])
+    InterpolationLayer(net, 'conv7_2', 'conv7_2_us', output_shape=[38, 38])
 
     net['fea_concat'] = L.Concat(net['conv4_3_reduce'],net['fc7_us'],net['conv7_2_us'],axis = 1)
     net['fea_concat_bn'] = L.BatchNorm(net['fea_concat'],in_place=True)
@@ -315,7 +325,7 @@ max_ratio = 90
 step = int(math.floor((max_ratio - min_ratio) / (len(mbox_source_layers) - 2)))
 min_sizes = []
 max_sizes = []
-for ratio in xrange(min_ratio, max_ratio + 1, step):
+for ratio in range(min_ratio, max_ratio + 1, step):
   min_sizes.append(min_dim * ratio / 100.)
   max_sizes.append(min_dim * (ratio + step) / 100.)
 
