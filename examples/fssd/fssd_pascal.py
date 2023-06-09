@@ -18,9 +18,17 @@ from caffe.model_libs import *
 from google.protobuf import text_format
 
 
-def InterpolationLayer(net, from_layer, out_layer, output_shape):
+def InterpolationLayer(net, from_layer, out_name, channels, expand_factor, lr_mult):
     input_layer = net[from_layer]
-    L.Convolution()
+    output_layer = L.Deconvolution(
+        input_layer,
+        num_output=channels, group=channels,
+        kernel_size=2 * expand_factor - expand_factor % 2,
+        stride=expand_factor, pad=math.ceil((expand_factor - 1) / 2),
+        weight_filler=dict(type="bilinear"), bias_term=False,
+        param=[dict(lr_mult=lr_mult, decay_mult=1)],
+    )
+    net[out_name] = output_layer
 
 
 # Add extra layers on top of a "base" network (e.g. VGGNet or Inception).
@@ -62,8 +70,8 @@ def AddExtraLayers(net, use_batchnorm=False, lr_mult=1):
     # net['fc7_us'] = L.Interp(net['fc7_reduce'],interp_param={'height':38,'width':38})
     # net['conv7_2_us'] = L.Interp(net['conv7_2'],interp_param={'height':38,'width':38})
 
-    InterpolationLayer(net, 'fc7_reduce', 'fc7_us', output_shape=[38, 38])
-    InterpolationLayer(net, 'conv7_2', 'conv7_2_us', output_shape=[38, 38])
+    InterpolationLayer(net, 'fc7_reduce', 'fc7_us', channels=256, expand_factor=2, lr_mult=lr_mult)
+    InterpolationLayer(net, 'conv7_2', 'conv7_2_us', channels=256, expand_factor=4, lr_mult=lr_mult)
 
     net['fea_concat'] = L.Concat(net['conv4_3_reduce'],net['fc7_us'],net['conv7_2_us'],axis = 1)
     net['fea_concat_bn'] = L.BatchNorm(net['fea_concat'],in_place=True)
