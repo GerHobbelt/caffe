@@ -435,63 +435,81 @@ cv::Mat ApplyNoise(const cv::Mat& in_img, const NoiseParameter& param) {
     out_img = in_img;
   }
 
-  if (param.gauss_blur()) {
-    cv::GaussianBlur(out_img, out_img, cv::Size(7, 7), 1.5);
+  if (param.gauss_blur_prob() > 0) {
+//    cv::GaussianBlur(out_img, out_img, cv::Size(7, 7), 1.5);
+      float prob;
+      caffe_rng_uniform(1, 0.f, 1.f, &prob);
+      if (prob < param.gauss_blur_prob())
+        cv::GaussianBlur(out_img, out_img, cv::Size(0, 0), param.gauss_blur_sigma());
   }
 
-  if (param.hist_eq()) {
-    if (out_img.channels() > 1) {
-      cv::Mat ycrcb_image;
-      cv::cvtColor(out_img, ycrcb_image, CV_BGR2YCrCb);
-      // Extract the L channel
-      vector<cv::Mat> ycrcb_planes(3);
-      cv::split(ycrcb_image, ycrcb_planes);
-      // now we have the L image in ycrcb_planes[0]
-      cv::Mat dst;
-      cv::equalizeHist(ycrcb_planes[0], dst);
-      ycrcb_planes[0] = dst;
-      cv::merge(ycrcb_planes, ycrcb_image);
-      // convert back to RGB
-      cv::cvtColor(ycrcb_image, out_img, CV_YCrCb2BGR);
-    } else {
-      cv::Mat temp_img;
-      cv::equalizeHist(out_img, temp_img);
-      out_img = temp_img;
+  if (param.hist_eq_prob()) {
+    float prob;
+    caffe_rng_uniform(1, 0.f, 1.f, &prob);
+    if (prob < param.hist_eq_prob()) {
+      if (out_img.channels() > 1) {
+        cv::Mat ycrcb_image;
+        cv::cvtColor(out_img, ycrcb_image, CV_BGR2YCrCb);
+        // Extract the L channel
+        vector<cv::Mat> ycrcb_planes(3);
+        cv::split(ycrcb_image, ycrcb_planes);
+        // now we have the L image in ycrcb_planes[0]
+        cv::Mat dst;
+        cv::equalizeHist(ycrcb_planes[0], dst);
+        ycrcb_planes[0] = dst;
+        cv::merge(ycrcb_planes, ycrcb_image);
+        // convert back to RGB
+        cv::cvtColor(ycrcb_image, out_img, CV_YCrCb2BGR);
+      } else {
+        cv::Mat temp_img;
+        cv::equalizeHist(out_img, temp_img);
+        out_img = temp_img;
+      }
     }
   }
 
-  if (param.clahe()) {
-    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
-    clahe->setClipLimit(4);
-    if (out_img.channels() > 1) {
-      cv::Mat ycrcb_image;
-      cv::cvtColor(out_img, ycrcb_image, CV_BGR2YCrCb);
-      // Extract the L channel
-      vector<cv::Mat> ycrcb_planes(3);
-      cv::split(ycrcb_image, ycrcb_planes);
-      // now we have the L image in ycrcb_planes[0]
-      cv::Mat dst;
-      clahe->apply(ycrcb_planes[0], dst);
-      ycrcb_planes[0] = dst;
-      cv::merge(ycrcb_planes, ycrcb_image);
-      // convert back to RGB
-      cv::cvtColor(ycrcb_image, out_img, CV_YCrCb2BGR);
-    } else {
+  if (param.clahe_prob() > 0) {
+    float prob;
+    caffe_rng_uniform(1, 0.f, 1.f, &prob);
+    if (prob < param.clahe_prob()) {
       cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
       clahe->setClipLimit(4);
-      cv::Mat temp_img;
-      clahe->apply(out_img, temp_img);
-      out_img = temp_img;
+      if (out_img.channels() > 1) {
+        cv::Mat ycrcb_image;
+        cv::cvtColor(out_img, ycrcb_image, CV_BGR2YCrCb);
+        // Extract the L channel
+        vector<cv::Mat> ycrcb_planes(3);
+        cv::split(ycrcb_image, ycrcb_planes);
+        // now we have the L image in ycrcb_planes[0]
+        cv::Mat dst;
+        clahe->apply(ycrcb_planes[0], dst);
+        ycrcb_planes[0] = dst;
+        cv::merge(ycrcb_planes, ycrcb_image);
+        // convert back to RGB
+        cv::cvtColor(ycrcb_image, out_img, CV_YCrCb2BGR);
+      } else {
+        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+        clahe->setClipLimit(4);
+        cv::Mat temp_img;
+        clahe->apply(out_img, temp_img);
+        out_img = temp_img;
+      }
     }
   }
 
-  if (param.jpeg() > 0) {
-    vector<uchar> buf;
-    vector<int> params;
-    params.push_back(CV_IMWRITE_JPEG_QUALITY);
-    params.push_back(param.jpeg());
-    cv::imencode(".jpg", out_img, buf, params);
-    out_img = cv::imdecode(buf, CV_LOAD_IMAGE_COLOR);
+  if (param.jpeg_prob() > 0) {
+    float prob;
+    caffe_rng_uniform(1, 0.f, 1.f, &prob);
+    if (prob < param.jpeg_prob()) {
+      float quality;
+      caffe_rng_uniform(1, param.jpeg_quality_min(), param.jpeg_quality_max(), &quality);
+      vector<uchar> buf;
+      vector<int> params;
+      params.push_back(CV_IMWRITE_JPEG_QUALITY);
+      params.push_back(quality);
+      cv::imencode(".jpg", out_img, buf, params);
+      out_img = cv::imdecode(buf, CV_LOAD_IMAGE_COLOR);
+    }
   }
 
   if (param.erode()) {

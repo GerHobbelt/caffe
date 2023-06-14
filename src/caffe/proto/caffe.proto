@@ -216,7 +216,7 @@ message NetParameter {
 // NOTE
 // Update the next available ID when you add a new SolverParameter field.
 //
-// SolverParameter next available ID: 47 (last added: weights)
+// SolverParameter next available ID: 50 (last added: cosine_decay_mult)
 message SolverParameter {
   //////////////////////////////////////////////////////////////////////////////
   // Specifying the train and test networks
@@ -322,7 +322,7 @@ message SolverParameter {
   // The prefix for the snapshot.
   // If not set then is replaced by prototxt file path without extension.
   // If is set to directory then is augmented by prototxt file name
-  // without extention.
+  // without extension.
   optional string snapshot_prefix = 15;
   // whether to snapshot diff in the results or not. Snapshotting diff will help
   // debugging but the final protocol buffer size will be much larger.
@@ -372,6 +372,7 @@ message SolverParameter {
     RMSPROP = 3;
     ADADELTA = 4;
     ADAM = 5;
+    ADAMWR = 6;
   }
   // DEPRECATED: use type instead of solver_type
   optional SolverType solver_type = 30 [default = SGD];
@@ -388,6 +389,13 @@ message SolverParameter {
   // weights parameter separated by ',' (like in a command string) or
   // in repeated weights parameters separately.
   repeated string weights = 46;
+
+  // If true, adamw solver will restart per cosine decay scheduler
+  optional bool with_restart = 47 [default = false];
+
+  // cosine decay, refers to paper of AdamWR
+  optional int32 cosine_decay_steps = 48 [default = 1000];
+  optional int32 cosine_decay_mult = 49 [default = 2];
 }
 
 // A message that stores the solver snapshots
@@ -397,7 +405,7 @@ message SolverState {
   repeated BlobProto history = 3; // The history for sgd solvers
   optional int32 current_step = 4 [default = 0]; // The current step for learning rate
   optional float minimum_loss = 5 [default = 1E38]; // Historical minimum loss
-  optional int32 iter_last_event = 6 [default = 0]; // The iteration when last lr-update or min_loss-update happend
+  optional int32 iter_last_event = 6 [default = 0]; // The iteration when last lr-update or min_loss-update happened
 }
 
 enum Phase {
@@ -653,39 +661,40 @@ message SaltPepperParameter {
 // Message that stores parameters used by data transformer for transformation
 // policy
 message NoiseParameter {
-  //Probability of using this resize policy
-  optional float prob = 1 [default = 0];
   // Histogram equalized
-  optional bool hist_eq = 2 [default = false];
+  optional float hist_eq_prob = 1 [default = 0];
   // Color inversion
-  optional bool inverse = 3 [default = false];
+  optional bool inverse = 2 [default = false];
   // Grayscale
-  optional bool decolorize = 4 [default = false];
-  // Gaussian blur
-  optional bool gauss_blur = 5 [default = false];
+  optional bool decolorize = 3 [default = false];
 
-  // JPEG compression quality (-1 = no compression)
-  optional float jpeg = 6 [default = -1];
+  // Gaussian blur
+  optional float gauss_blur_prob = 4 [default = 0];
+  optional float gauss_blur_sigma = 5 [default = 1.5];
+
+  // JPEG compression quality (0 to 100)
+  optional float jpeg_prob = 6 [default = 0];
+  optional float jpeg_quality_min = 7 [default = -1];
+  optional float jpeg_quality_max = 8 [default = -1];
 
   // Posterization
-  optional bool posterize = 7 [default = false];
+  optional bool posterize = 9 [default = false];
 
   // Erosion
-  optional bool erode = 8 [default = false];
+  optional bool erode = 10 [default = false];
 
   // Salt-and-pepper noise
-  optional bool saltpepper = 9 [default = false];
-
-  optional SaltPepperParameter saltpepper_param = 10;
+  optional bool saltpepper = 11 [default = false];
+  optional SaltPepperParameter saltpepper_param = 12;
 
   // Local histogram equalization
-  optional bool clahe = 11 [default = false];
+  optional float clahe_prob = 13 [default = 0];
 
   // Color space conversion
-  optional bool convert_to_hsv = 12 [default = false];
+  optional bool convert_to_hsv = 14 [default = false];
 
   // Color space conversion
-  optional bool convert_to_lab = 13 [default = false];
+  optional bool convert_to_lab = 15 [default = false];
 }
 
 // Message that stores parameters used by data transformer for distortion policy

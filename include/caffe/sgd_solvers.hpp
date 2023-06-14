@@ -148,6 +148,25 @@ class AdamSolver : public SGDSolver<Dtype> {
   DISABLE_COPY_AND_ASSIGN(AdamSolver);
 };
 
+template<typename Dtype>
+class AdamWRSolver : public SGDSolver<Dtype> {
+public:
+  explicit AdamWRSolver(const SolverParameter &param)
+          : SGDSolver<Dtype>(param) { AdamWRPreSolve(); }
+
+  explicit AdamWRSolver(const string &param_file)
+          : SGDSolver<Dtype>(param_file) { AdamWRPreSolve(); }
+
+  virtual inline const char *type() const { return "AdamWR"; }
+
+protected:
+  void AdamWRPreSolve();
+
+  virtual void ComputeUpdateValue(int param_id, Dtype rate);
+
+DISABLE_COPY_AND_ASSIGN(AdamWRSolver);
+};
+
 }  // namespace caffe
 
 #endif  // CAFFE_SGD_SOLVERS_HPP_
