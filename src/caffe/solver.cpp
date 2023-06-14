@@ -60,6 +60,7 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
     LOG(INFO) << "Solver scaffolding done.";
   }
   iter_ = 0;
+  test_loss_ = -999;
   test_iter_ = -1;
   current_step_ = 0;
 }
@@ -409,6 +410,7 @@ void Solver<Dtype>::TestClassification(const int test_net_id) {
   if (param_.test_compute_loss()) {
     loss /= param_.test_iter(test_net_id);
     LOG(INFO) << "Test loss: " << loss;
+    test_loss_ = loss;
   }
 
   test_iter_ = iter_;
