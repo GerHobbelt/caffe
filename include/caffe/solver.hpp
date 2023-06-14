@@ -74,6 +74,7 @@ class Solver {
   }
   int iter() const { return iter_; }
 
+  Dtype test_loss() const { return test_loss_; }
   int test_iter() const { return test_iter_; }
   const vector<Dtype>& test_outputs() const { return test_outputs_; }
 
@@ -122,6 +123,7 @@ class Solver {
   vector<Callback*> callbacks_;
   vector<Dtype> losses_;
   int test_iter_;
+  Dtype test_loss_;
   vector<Dtype> test_outputs_;
   Dtype smoothed_loss_;
 
