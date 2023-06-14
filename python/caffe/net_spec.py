@@ -37,6 +37,13 @@ def param_name_dict():
     # strip the final '_param' or 'Parameter'
     param_names = [s[:-len('_param')] for s in param_names]
     param_type_names = [s[:-len('Parameter')] for s in param_type_names]
+
+    # FIXME: The Deconvolution layer uses convolution_param and has no explicit
+    # deconvolution_param field. I don't know what to do other than add it
+    # explicitly here
+    param_type_names.append("Deconvolution")
+    param_names.append("convolution")
+
     return dict(zip(param_type_names, param_names))
 
 
