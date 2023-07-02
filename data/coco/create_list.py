@@ -29,15 +29,21 @@ test_list_file = "{}/test.txt".format(CURDIR)
 # Create training set.
 # We follow Ross Girschick's split.
 if redo or not os.path.exists(train_list_file):
-    datasets = ["train2014", "valminusminival2014"]
+    datasets = ["train2014", "valminusminival2014", "train2017"]
     img_files = []
     anno_files = []
     for dataset in datasets:
         imgset_file = "{}/{}/{}.txt".format(data_dir, imgset_dir, dataset)
+        if not os.path.exists(imgset_file):
+            print(f"{imgset_file} not found")
+            continue
         with open(imgset_file, "r") as f:
             for line in f.readlines():
                 name = line.strip("\n")
-                subset = name.split("_")[1]
+                if "_" in name:
+                    subset = name.split("_")[1]
+                else:
+                    subset = dataset
                 img_file = "{}/{}/{}.{}".format(img_dir, subset, name, img_ext)
                 assert os.path.exists("{}/{}".format(data_dir, img_file)), \
                         "{}/{} does not exist".format(data_dir, img_file)
@@ -47,7 +53,7 @@ if redo or not os.path.exists(train_list_file):
                 img_files.append(img_file)
                 anno_files.append(anno_file)
     # Shuffle the images.
-    idx = [i for i in xrange(len(img_files))]
+    idx = [i for i in range(len(img_files))]
     shuffle(idx)
     with open(train_list_file, "w") as f:
         for i in idx:
@@ -60,6 +66,9 @@ if redo or not os.path.exists(minival_list_file):
     anno_files = []
     for dataset in datasets:
         imgset_file = "{}/{}/{}.txt".format(data_dir, imgset_dir, dataset)
+        if not os.path.exists(imgset_file):
+            print(f"{imgset_file} not found")
+            continue
         with open(imgset_file, "r") as f:
             for line in f.readlines():
                 name = line.strip("\n")
@@ -72,7 +81,7 @@ if redo or not os.path.exists(minival_list_file):
                 img_files.append(img_file)
                 anno_files.append(anno_file)
     with open(minival_list_file, "w") as f:
-        for i in xrange(len(img_files)):
+        for i in range(len(img_files)):
             f.write("{} {}\n".format(img_files[i], anno_files[i]))
 
 if redo or not os.path.exists(testdev_list_file):
@@ -82,6 +91,9 @@ if redo or not os.path.exists(testdev_list_file):
     anno_files = []
     for dataset in datasets:
         imgset_file = "{}/{}/{}.txt".format(data_dir, imgset_dir, dataset)
+        if not os.path.exists(imgset_file):
+            print(f"{imgset_file} not found")
+            continue
         with open(imgset_file, "r") as f:
             for line in f.readlines():
                 name = line.strip("\n")
@@ -94,16 +106,19 @@ if redo or not os.path.exists(testdev_list_file):
                 img_files.append(img_file)
                 anno_files.append(anno_file)
     with open(testdev_list_file, "w") as f:
-        for i in xrange(len(img_files)):
+        for i in range(len(img_files)):
             f.write("{} {}\n".format(img_files[i], anno_files[i]))
 
 if redo or not os.path.exists(test_list_file):
-    datasets = ["test2015"]
-    subset = "test2015"
+    datasets = ["test2015", "val2017"]
     img_files = []
     anno_files = []
     for dataset in datasets:
+        subset = dataset
         imgset_file = "{}/{}/{}.txt".format(data_dir, imgset_dir, dataset)
+        if not os.path.exists(imgset_file):
+            print(f"{imgset_file} not found")
+            continue
         with open(imgset_file, "r") as f:
             for line in f.readlines():
                 name = line.strip("\n")
@@ -116,6 +131,6 @@ if redo or not os.path.exists(test_list_file):
                 img_files.append(img_file)
                 anno_files.append(anno_file)
     with open(test_list_file, "w") as f:
-        for i in xrange(len(img_files)):
+        for i in range(len(img_files)):
             f.write("{} {}\n".format(img_files[i], anno_files[i]))
 

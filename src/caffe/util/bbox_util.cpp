@@ -994,7 +994,7 @@ void MineHardExamples(const Blob<Dtype>& conf_blob,
         vector<int> nms_indices;
         ApplyNMS(sel_bboxes, sel_loss, nms_threshold, top_k, &nms_indices);
         if (nms_indices.size() < num_sel) {
-          LOG(INFO) << "not enough sample after nms: " << nms_indices.size();
+          LOG(INFO) << "not enough sample after nms: " << nms_indices.size() << " < " << num_sel;
         }
         // Pick top example indices after nms.
         num_sel = std::min(static_cast<int>(nms_indices.size()), num_sel);
