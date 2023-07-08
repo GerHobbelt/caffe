@@ -93,6 +93,28 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
 
     rate = this->param_.base_lr() *
         pow(this->param_.gamma(), this->current_step_);
+  } else if (lr_policy == "triangular") {
+    int itr = this->iter_ - this->param_.start_lr_policy();
+    int cycle = 1 + itr / (2 * this->param_.stepsize());
+    if (itr > 0) {
+      double x = (double) (itr - (2*cycle - 1) * this->param_.stepsize());
+      x /= this->param_.stepsize();
+      rate = this->param_.base_lr() + (this->param_.max_lr() - this->param_.base_lr())
+              * std::max(0., (1. - std::fabs(x)) / cycle);
+    } else {
+      rate = this->param_.base_lr();
+    }
+  } else if (lr_policy == "triangular2") {
+    int itr = this->iter_ - this->param_.start_lr_policy();
+    if (itr > 0) {
+      int cycle = itr / (2 * this->param_.stepsize());
+      double x = (double) (itr - (2*cycle - 1) * this->param_.stepsize());
+      x /= this->param_.stepsize();
+      rate = this->param_.base_lr() + (this->param_.max_lr() - this->param_.base_lr())
+              * std::min(1., std::max(0., (1. - std::fabs(x)) / std::pow(2., double(cycle))));
+    } else {
+      rate = this->param_.base_lr();
+    }
   } else {
     LOG(FATAL) << "Unknown learning rate policy: " << lr_policy;
   }
