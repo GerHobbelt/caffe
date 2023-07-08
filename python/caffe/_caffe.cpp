@@ -394,6 +394,9 @@ BOOST_PYTHON_MODULE(_caffe) {
   bp::def("set_mode_gpu", &set_mode_gpu);
   bp::def("set_random_seed", &set_random_seed);
   bp::def("set_device", &Caffe::SetDevice);
+  bp::def("find_device", &Caffe::FindDevice);
+  bp::def("find_device_by_pci_bus", &Caffe::FindDeviceByPCIBus);
+  bp::def("device_query", &Caffe::DeviceQuery);
   bp::def("solver_count", &Caffe::solver_count);
   bp::def("set_solver_count", &Caffe::set_solver_count);
   bp::def("solver_rank", &Caffe::solver_rank);
