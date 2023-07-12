@@ -148,15 +148,15 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
       4,
       &RetCnt,
       fwd_algo_pref_));
-		
+
     found_conv_algorithm = false;
     for(int n=0;n<RetCnt;n++){
       if (fwd_algo_pref_[n].status == CUDNN_STATUS_SUCCESS &&
           fwd_algo_pref_[n].algo != CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD_NONFUSED &&
           fwd_algo_pref_[n].memory < free_memory){
         found_conv_algorithm = true;
-	fwd_algo_[i]                   = fwd_algo_pref_[n].algo;
- 	workspace_fwd_sizes_[i]        = fwd_algo_pref_[n].memory;
+        fwd_algo_[i]                   = fwd_algo_pref_[n].algo;
+        workspace_fwd_sizes_[i]        = fwd_algo_pref_[n].memory;
         break;
       }
     }
@@ -187,9 +187,9 @@ void CuDNNConvolutionLayer<Dtype>::Reshape(
 
     // choose backward algo for data
     CUDNN_CHECK(cudnnGetConvolutionBackwardDataAlgorithm_v7(handle_[0],
-      filter_desc_, 
-      top_descs_[i], 
-      conv_descs_[i], 
+      filter_desc_,
+      top_descs_[i],
+      conv_descs_[i],
       bottom_descs_[i],
       4,
       &RetCnt,
