@@ -28,6 +28,8 @@ template <typename Dtype>
 Dtype SGDSolver<Dtype>::GetLearningRate() {
   Dtype rate;
   const string& lr_policy = this->param_.lr_policy();
+  int itr = this->iter_ - this->param_.start_lr_policy();
+
   if (lr_policy == "fixed") {
     rate = this->param_.base_lr();
   } else if (lr_policy == "step") {
@@ -38,11 +40,11 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
         pow(this->param_.gamma(), this->current_step_);
   } else if (lr_policy == "exp") {
     CHECK_GE(this->param_.gamma(), 0);
-    rate = this->param_.base_lr() * pow(this->param_.gamma(), this->iter_);
+    rate = this->param_.base_lr() * pow(this->param_.gamma(), itr);
   } else if (lr_policy == "inv") {
     CHECK_GE(this->param_.gamma(), 0);
     rate = this->param_.base_lr() *
-        pow(Dtype(1) + this->param_.gamma() * this->iter_,
+        pow(Dtype(1) + this->param_.gamma() * itr,
             - this->param_.power());
   } else if (lr_policy == "multistep") {
     if (this->current_step_ < this->param_.stepvalue_size() &&
@@ -56,13 +58,13 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
         pow(this->param_.gamma(), this->current_step_);
   } else if (lr_policy == "poly") {
     rate = this->param_.base_lr() * pow(Dtype(1.) -
-        (Dtype(this->iter_) / Dtype(this->param_.max_iter())),
+        (Dtype(itr) / Dtype(this->param_.max_iter())),
         this->param_.power());
   } else if (lr_policy == "sigmoid") {
     CHECK_GE(this->param_.gamma(), 0);
     CHECK_GT(this->param_.stepsize(), 0);
     rate = this->param_.base_lr() * (Dtype(1.) /
-        (Dtype(1.) + exp(-this->param_.gamma() * (Dtype(this->iter_) -
+        (Dtype(1.) + exp(-this->param_.gamma() * (Dtype(itr) -
           Dtype(this->param_.stepsize())))));
   } else if (lr_policy == "plateau") {
     // Update minimum loss if needed
@@ -94,7 +96,6 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
     rate = this->param_.base_lr() *
         pow(this->param_.gamma(), this->current_step_);
   } else if (lr_policy == "triangular") {
-    int itr = this->iter_ - this->param_.start_lr_policy();
     int cycle = 1 + itr / (2 * this->param_.stepsize());
     if (itr > 0) {
       double x = (double) (itr - (2*cycle - 1) * this->param_.stepsize());
@@ -105,7 +106,6 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
       rate = this->param_.base_lr();
     }
   } else if (lr_policy == "triangular2") {
-    int itr = this->iter_ - this->param_.start_lr_policy();
     if (itr > 0) {
       int cycle = itr / (2 * this->param_.stepsize());
       double x = (double) (itr - (2*cycle - 1) * this->param_.stepsize());
