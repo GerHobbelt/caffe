@@ -78,7 +78,7 @@ class DateLogger {
 
 #ifdef CAFFE_THROW_ON_ERROR
 #include <sstream>
-#define SSTR( x ) dynamic_cast< std::ostringstream & >( \
+#define SSTR( x ) dynamic_cast< std::ostringstream && >( \
 		 ( std::ostringstream() << std::dec << x ) ).str()
 class CaffeErrorException : public std::exception
 {
