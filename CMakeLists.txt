@@ -126,7 +126,7 @@ if(HAVE_CUDA)
     SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler /wd4819")
   endif()
 endif()
-
+add_compile_definitions(GLOG_USE_GLOG_EXPORT)
 # ---[ Subdirectories
 add_subdirectory(src/gtest)
 add_subdirectory(src/caffe)
@@ -167,4 +167,3 @@ caffe_print_configuration_summary()
 
 # ---[ Export configs generation
 caffe_generate_export_configs()
-
