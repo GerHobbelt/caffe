@@ -5,11 +5,15 @@ set(Caffe_LINKER_LIBS "")
 find_package(Boost COMPONENTS system thread filesystem)
 if (Boost_FOUND)
   message("Find Boost in system")
+  find_package(Boost REQUIRED COMPONENTS system thread filesystem)
+  include_directories(${Boost_INCLUDE_DIRS})
+  list(APPEND Caffe_LINKER_LIBS ${Boost_LIBRARIES})
 else()
   hunter_add_package(Boost COMPONENTS system thread filesystem)
+  include_directories(${Boost_INCLUDE_DIRS})
+  list(APPEND Caffe_LINKER_LIBS Boost::system Boost::filesystem Boost::thread)
 endif ()
-find_package(Boost REQUIRED COMPONENTS system thread filesystem)
-list(APPEND Caffe_LINKER_LIBS Boost::system Boost::filesystem Boost::thread)
+
 
 # ---[ Threads
 find_package(Threads REQUIRED)
