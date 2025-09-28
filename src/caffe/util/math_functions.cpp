@@ -242,7 +242,6 @@ float caffe_nextafter(const float b);
 
 template
 double caffe_nextafter(const double b);
-
 template <typename Dtype>
 void caffe_rng_uniform(const int n, Dtype a, Dtype b, Dtype* r) {
   CHECK_GE(n, 0);
@@ -259,7 +258,7 @@ void caffe_rng_uniform(const int n, Dtype a, Dtype b, Dtype* r) {
       variate_generator(caffe_rng(), random_distribution);
   for (int i = 0; i < n; ++i) {
     r[i] = variate_generator();
-  }
+ }
 }
 
 template
