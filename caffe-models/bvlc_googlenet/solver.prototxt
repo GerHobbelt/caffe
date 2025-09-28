@@ -1,0 +1,16 @@
+net: "caffe-models/bvlc_googlenet/train_val.prototxt"
+test_iter: 250
+test_interval: 250
+test_initialization: false
+display: 40
+average_loss: 40
+base_lr: 0.01
+lr_policy: "step"
+stepsize: 250
+gamma: 0.96
+max_iter: 250
+momentum: 0.9
+weight_decay: 0.0002
+snapshot: 250
+snapshot_prefix: "caffe-models/bvlc_googlenet/bvlc_googlenet"
+solver_mode: GPU
