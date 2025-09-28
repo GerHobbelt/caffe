@@ -183,6 +183,11 @@ DEFINE_CAFFE_CPU_UNARY_FUNC(fabs, y[i] = std::fabs(x[i]));
 template <typename Dtype>
 void caffe_cpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
 
+template <typename Dtype>
+void caffe_cpu_quant(const int n, const Dtype alpha, const Dtype beta, const Dtype gamma,
+	       	const Dtype *x, Dtype* y);
+
+
 // Decaf gpu gemm provides an interface that is almost the same as the cpu
 // gemm function - following the c convention and calling the fortran-order
 // gpu code under the hood.

@@ -50,8 +50,8 @@ namespace bp = boost::python;
 namespace caffe {
 
 // For Python, for now, we'll just always use float as the type.
-typedef float Dtype;
-const int NPY_DTYPE = NPY_FLOAT32;
+typedef double Dtype;
+const int NPY_DTYPE = NPY_FLOAT64;
 shared_ptr<GPUMemory::Scope> gpu_memory_scope;
 
 void initialize_gpu_memory_scope(const vector<int>& gpus) {
@@ -128,8 +128,8 @@ void CheckContiguousArray(PyArrayObject* arr, string name,
   if (PyArray_NDIM(arr) != 4) {
     throw std::runtime_error(name + " must be 4-d");
   }
-  if (PyArray_TYPE(arr) != NPY_FLOAT32) {
-    throw std::runtime_error(name + " must be float32");
+  if (PyArray_TYPE(arr) != NPY_FLOAT64) {
+    throw std::runtime_error(name + " must be float64");
   }
   if (PyArray_DIMS(arr)[1] != channels) {
     throw std::runtime_error(name + " has wrong number of channels");
@@ -260,7 +260,7 @@ struct NdarrayCallPolicies : public bp::default_call_policies {
     const int num_axes = blob->num_axes();
     vector<npy_intp> dims(blob->shape().begin(), blob->shape().end());
     PyObject *arr_obj = PyArray_SimpleNewFromData(num_axes, dims.data(),
-                                                  NPY_FLOAT32, data);
+                                                  NPY_FLOAT64, data);
     // SetBaseObject steals a ref, so we need to INCREF.
     Py_INCREF(pyblob.ptr());
     PyArray_SetBaseObject(reinterpret_cast<PyArrayObject*>(arr_obj),

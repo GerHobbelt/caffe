@@ -13,6 +13,7 @@
 #include "caffe/layers/lrn_layer.hpp"
 #include "caffe/layers/pooling_layer.hpp"
 #include "caffe/layers/relu_layer.hpp"
+#include "caffe/layers/relu6_layer.hpp"
 #include "caffe/layers/sigmoid_layer.hpp"
 #include "caffe/layers/softmax_layer.hpp"
 #include "caffe/layers/tanh_layer.hpp"
@@ -182,6 +183,24 @@ shared_ptr<LayerBase> GetReLULayer(const LayerParameter& param,
 }
 
 REGISTER_LAYER_CREATOR(ReLU, GetReLULayer);
+
+// Get relu6 layer according to engine.
+shared_ptr<LayerBase> GetReLU6Layer(const LayerParameter& param,
+    Type ftype, Type btype, size_t) {
+  ReLUParameter_Engine engine = param.relu_param().engine();
+  if (engine == ReLUParameter_Engine_DEFAULT) {
+    engine = ReLUParameter_Engine_CAFFE;
+  }
+  if (engine == ReLUParameter_Engine_CAFFE) {
+    return CreateLayerBase<ReLU6Layer>(param, ftype, btype);
+  } else {
+    LOG(FATAL) << "Layer " << param.name() << " has unknown engine.";
+    throw;  // Avoids missing return warning
+  }
+}
+
+REGISTER_LAYER_CREATOR(ReLU6, GetReLU6Layer);
+
 
 // Get sigmoid layer according to engine.
 shared_ptr<LayerBase> GetSigmoidLayer(const LayerParameter& param,

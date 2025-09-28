@@ -678,6 +678,46 @@ void caffe_cpu_scale<double>(const int n, const double alpha, const double *x,
   cblas_dscal(n, alpha, y, 1);
 }
 
+template<>
+void caffe_cpu_quant<float>(const int n, const float alpha, const float beta,
+		const float gamma, const float *x, float* y) {}
+
+template<>
+void caffe_cpu_quant<float16>(const int n, const float16 alpha, const float16 beta,
+		const float16 gamma, const float16 *x, float16 * y) {}
+
+template <>
+void caffe_cpu_quant<double>(const int n, const double alpha, const double beta,
+		const double gamma, const double *x, double* y) {
+  const int32_t scale = static_cast<int32_t>(alpha);
+  int32_t b;
+  const bool overflow = scale == std::numeric_limits<std::int32_t>::min();
+  const int8_t exponent = static_cast<int8_t>(beta);
+  const int8_t offset = static_cast<int8_t>(gamma);
+  const int32_t pos_nudge = (1 << 30);
+  const int32_t neg_nudge = (1 - (1 << 30));
+  const int32_t mask = (1 << exponent) - 1;
+  int32_t remainder, threshold;
+  int64_t ab_64;
+  int32_t ab_32;
+  for(int i = 0; i < n; i++){
+    b = static_cast<int32_t>(x[i]);
+    //if(overflow && scale == b) {
+    //    ab_32 = std::numeric_limits<std::int32_t>::max();
+    //} else
+    {
+        ab_64  = static_cast<int64_t>(scale) * static_cast<int64_t>(b);
+        ab_64 += (ab_64 >= 0 ? pos_nudge : neg_nudge);
+        ab_32 = static_cast<int32_t>(ab_64 >> 31);
+    }
+    remainder = ab_32 & mask;
+    threshold = (mask >> 1) + (ab_32 < 0 ? 1: 0);
+    ab_32 = ab_32 >> exponent;
+    ab_32 += (remainder > threshold ? 1: 0) + offset;
+    y[i] = static_cast<double>(static_cast<int8_t>(std::min(std::max(ab_32, -128), 127))) - offset;
+  }
+}
+
 template <>
 void caffe_cpu_scale<float16>(const int n, const float16 alpha,  // TODO
     const float16 *x, float16 *y) {
