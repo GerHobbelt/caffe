@@ -1,6 +1,6 @@
-if(CPU_ONLY)
+if (CPU_ONLY)
   return()
-endif()
+endif ()
 
 # Known NVIDIA GPU achitectures Caffe can be compiled for.
 # This list will be used for CUDA_ARCH_NAME = All option
@@ -9,14 +9,39 @@ endif()
 # For RTX 3080
 # set(Caffe_known_gpu_archs "80 80 86 87")
 # For RTX 4070
-set(Caffe_known_gpu_archs "89 89")
+# set(Caffe_known_gpu_archs "89 89")
+#
+# set(Caffe_known_gpu_archs "30 35 50 52 60 61")
+# set(Caffe_known_gpu_archs "20 21(20) 30 35 50 60 61")
+# Fermi (3.2 <= CUDA <= 8)
+# set(FERMI "20 21(20)")
+# Kepler (CUDA >= 5)
+set(KEPLER "35 37") # set(KEPLER "30 35 37") # This crashes with CUDA 10
+# Maxwell (CUDA >= 6)
+set(MAXWELL "50 52 53")
+# Pascal (CUDA >= 8)
+set(PASCAL "60 61 62")
+# Volta (CUDA >= 9)
+set(VOLTA "70 72") # set(VOLTA "70 71 72") # This crashes with CUDA 10
+# Turing (CUDA >= 10)
+set(TURING "75")
+# Ampere (CUDA >= 11)
+set(AMPERE "80 86")
+if (UNIX AND NOT APPLE)
+  set(Caffe_known_gpu_archs "${KEPLER} ${MAXWELL} ${PASCAL} ${VOLTA} ${TURING} ${AMPERE}")
+  # set(Caffe_known_gpu_archs "${FERMI} ${KEPLER} ${MAXWELL} ${PASCAL} ${VOLTA} ${TURING}")
+  # set(Caffe_known_gpu_archs "20 21(20) 30 35 50 52 60 61")
+elseif (WIN32)
+  set(Caffe_known_gpu_archs "${KEPLER} ${MAXWELL} ${PASCAL} ${VOLTA} ${TURING} ${AMPERE}")
+endif ()
+
 
 ################################################################################################
 # A function for automatic detection of GPUs installed  (if autodetection is enabled)
 # Usage:
 #   caffe_detect_installed_gpus(out_variable)
 function(caffe_detect_installed_gpus out_variable)
-  if(NOT CUDA_gpu_detect_output)
+  if (NOT CUDA_gpu_detect_output)
     set(__cufile ${PROJECT_BINARY_DIR}/detect_cuda_archs.cu)
 
     file(WRITE ${__cufile} ""
@@ -40,18 +65,20 @@ function(caffe_detect_installed_gpus out_variable)
                     RESULT_VARIABLE __nvcc_res OUTPUT_VARIABLE __nvcc_out
                     ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-    if(__nvcc_res EQUAL 0)
-      string(REPLACE "2.1" "2.1(2.0)" __nvcc_out "${__nvcc_out}")
+    if (__nvcc_res EQUAL 0)
+      if (NOT WIN32)
+        string(REPLACE "2.1" "2.1(2.0)" __nvcc_out "${__nvcc_out}")
+      endif (NOT WIN32)
       set(CUDA_gpu_detect_output ${__nvcc_out} CACHE INTERNAL "Returned GPU architetures from caffe_detect_gpus tool" FORCE)
-    endif()
-  endif()
+    endif ()
+  endif ()
 
-  if(NOT CUDA_gpu_detect_output)
+  if (NOT CUDA_gpu_detect_output)
     message(STATUS "Automatic GPU detection failed. Building for all known architectures.")
     set(${out_variable} ${Caffe_known_gpu_archs} PARENT_SCOPE)
-  else()
+  else ()
     set(${out_variable} ${CUDA_gpu_detect_output} PARENT_SCOPE)
-  endif()
+  endif ()
 endfunction()
 
 
@@ -61,12 +88,14 @@ endfunction()
 #   caffe_select_nvcc_arch_flags(out_variable)
 function(caffe_select_nvcc_arch_flags out_variable)
   # List of arch names
-  set(__archs_names "Fermi" "Kepler" "Maxwell" "Pascal" "All" "Manual")
+  set(__archs_names "Kepler" "Maxwell" "Pascal" "Volta" "Turing" "All" "Manual")
+  # set(__archs_names "Fermi" "Kepler" "Maxwell" "Pascal" "Volta" "Turing" "All" "Manual")
+  # set(__archs_names "Fermi" "Kepler" "Maxwell" "Pascal" "All" "Manual")
   set(__archs_name_default "All")
-  if(NOT CMAKE_CROSSCOMPILING)
+  if (NOT CMAKE_CROSSCOMPILING)
     list(APPEND __archs_names "Auto")
     set(__archs_name_default "Auto")
-  endif()
+  endif ()
 
   # set CUDA_ARCH_NAME strings (so it will be seen as dropbox in CMake-Gui)
   set(CUDA_ARCH_NAME ${__archs_name_default} CACHE STRING "Select target NVIDIA GPU achitecture.")
@@ -74,35 +103,39 @@ function(caffe_select_nvcc_arch_flags out_variable)
   mark_as_advanced(CUDA_ARCH_NAME)
 
   # verify CUDA_ARCH_NAME value
-  if(NOT ";${__archs_names};" MATCHES ";${CUDA_ARCH_NAME};")
+  if (NOT ";${__archs_names};" MATCHES ";${CUDA_ARCH_NAME};")
     string(REPLACE ";" ", " __archs_names "${__archs_names}")
     message(FATAL_ERROR "Only ${__archs_names} architeture names are supported.")
-  endif()
+  endif ()
 
-  if(${CUDA_ARCH_NAME} STREQUAL "Manual")
+  if (${CUDA_ARCH_NAME} STREQUAL "Manual")
     set(CUDA_ARCH_BIN ${Caffe_known_gpu_archs} CACHE STRING "Specify 'real' GPU architectures to build binaries for, BIN(PTX) format is supported")
     set(CUDA_ARCH_PTX "50"                     CACHE STRING "Specify 'virtual' PTX architectures to build PTX intermediate code for")
     mark_as_advanced(CUDA_ARCH_BIN CUDA_ARCH_PTX)
-  else()
+  else ()
     unset(CUDA_ARCH_BIN CACHE)
     unset(CUDA_ARCH_PTX CACHE)
-  endif()
+  endif ()
 
-  if(${CUDA_ARCH_NAME} STREQUAL "Fermi")
-    set(__cuda_arch_bin "20 21(20)")
-  elseif(${CUDA_ARCH_NAME} STREQUAL "Kepler")
-    set(__cuda_arch_bin "30 35")
-  elseif(${CUDA_ARCH_NAME} STREQUAL "Maxwell")
-    set(__cuda_arch_bin "50")
-  elseif(${CUDA_ARCH_NAME} STREQUAL "Pascal")
-    set(__cuda_arch_bin "60 61")
-  elseif(${CUDA_ARCH_NAME} STREQUAL "All")
+  if (${CUDA_ARCH_NAME} STREQUAL "Fermi" AND NOT WIN32)
+    set(__cuda_arch_bin ${FERMI})
+  elseif (${CUDA_ARCH_NAME} STREQUAL "Kepler")
+    set(__cuda_arch_bin ${KEPLER})
+  elseif (${CUDA_ARCH_NAME} STREQUAL "Maxwell")
+    set(__cuda_arch_bin ${MAXWELL})
+  elseif (${CUDA_ARCH_NAME} STREQUAL "Pascal")
+    set(__cuda_arch_bin ${PASCAL})
+  elseif (${CUDA_ARCH_NAME} STREQUAL "Volta")
+    set(__cuda_arch_bin ${VOLTA})
+  elseif (${CUDA_ARCH_NAME} STREQUAL "Turing")
+    set(__cuda_arch_bin ${TURING})
+  elseif (${CUDA_ARCH_NAME} STREQUAL "All")
     set(__cuda_arch_bin ${Caffe_known_gpu_archs})
-  elseif(${CUDA_ARCH_NAME} STREQUAL "Auto")
+  elseif (${CUDA_ARCH_NAME} STREQUAL "Auto")
     caffe_detect_installed_gpus(__cuda_arch_bin)
-  else()  # (${CUDA_ARCH_NAME} STREQUAL "Manual")
+  else ()  # (${CUDA_ARCH_NAME} STREQUAL "Manual")
     set(__cuda_arch_bin ${CUDA_ARCH_BIN})
-  endif()
+  endif ()
 
   # remove dots and convert to lists
   string(REGEX REPLACE "\\." "" __cuda_arch_bin "${__cuda_arch_bin}")
@@ -115,22 +148,22 @@ function(caffe_select_nvcc_arch_flags out_variable)
   set(__nvcc_archs_readable "")
 
   string(COMPARE LESS "${CUDA_VERSION}" "9.0" iscudaolderthan90)
-  if(NOT iscudaolderthan90)
+  if (NOT iscudaolderthan90)
     string(REPLACE "21(20)" "" __cuda_arch_bin "${__cuda_arch_bin}")
     string(REPLACE "20" "" __cuda_arch_bin "${__cuda_arch_bin}")
-  endif()
+  endif ()
 
   # Tell NVCC to add binaries for the specified GPUs
   foreach(__arch ${__cuda_arch_bin})
-    if(__arch MATCHES "([0-9]+)\\(([0-9]+)\\)")
+    if (__arch MATCHES "([0-9]+)\\(([0-9]+)\\)")
       # User explicitly specified PTX for the concrete BIN
       list(APPEND __nvcc_flags -gencode arch=compute_${CMAKE_MATCH_2},code=sm_${CMAKE_MATCH_1})
       list(APPEND __nvcc_archs_readable sm_${CMAKE_MATCH_1})
-    else()
+    else ()
       # User didn't explicitly specify PTX for the concrete BIN, we assume PTX=BIN
       list(APPEND __nvcc_flags -gencode arch=compute_${__arch},code=sm_${__arch})
       list(APPEND __nvcc_archs_readable sm_${__arch})
-    endif()
+    endif ()
   endforeach()
 
   # Tell NVCC to add PTX intermediate code for the specified architectures
@@ -157,13 +190,13 @@ macro(caffe_cuda_compile objlist_variable)
 
   endforeach()
 
-  if(UNIX OR APPLE)
+  if (UNIX OR APPLE)
     list(APPEND CUDA_NVCC_FLAGS -Xcompiler -fPIC)
-  endif()
+  endif ()
 
-  if(APPLE)
+  if (APPLE)
     list(APPEND CUDA_NVCC_FLAGS -Xcompiler -Wno-unused-function)
-  endif()
+  endif ()
 
   cuda_compile(cuda_objcs ${ARGN})
 
@@ -188,22 +221,26 @@ function(detect_cuDNN)
             DOC "Path to cuDNN include directory." )
 
   # dynamic libs have different suffix in mac and linux
-  if(APPLE)
+  if (APPLE)
     set(CUDNN_LIB_NAME "libcudnn.dylib")
-  else()
+  else ()
     set(CUDNN_LIB_NAME "libcudnn.so")
-  endif()
+  endif ()
 
   get_filename_component(__libpath_hist ${CUDA_CUDART_LIBRARY} PATH)
   find_library(CUDNN_LIBRARY NAMES ${CUDNN_LIB_NAME}
    PATHS ${CUDNN_ROOT} $ENV{CUDNN_ROOT} ${CUDNN_INCLUDE} ${__libpath_hist} ${__libpath_hist}/../lib
    DOC "Path to cuDNN library.")
-
-  if(CUDNN_INCLUDE AND CUDNN_LIBRARY)
+  
+  if (CUDNN_INCLUDE AND CUDNN_LIBRARY)
     set(HAVE_CUDNN  TRUE PARENT_SCOPE)
     set(CUDNN_FOUND TRUE PARENT_SCOPE)
 
-    file(READ ${CUDNN_INCLUDE}/cudnn_version.h CUDNN_VERSION_FILE_CONTENTS)
+    if(EXISTS "${CUDNN_INCLUDE}/cudnn_version.h")
+        file(READ ${CUDNN_INCLUDE}/cudnn_version.h CUDNN_VERSION_FILE_CONTENTS)
+    else()
+        file(READ ${CUDNN_INCLUDE}/cudnn.h CUDNN_VERSION_FILE_CONTENTS)
+    endif()
 
     # cuDNN v3 and beyond
     string(REGEX MATCH "define CUDNN_MAJOR * +([0-9]+)"
@@ -219,23 +256,23 @@ function(detect_cuDNN)
     string(REGEX REPLACE "define CUDNN_PATCHLEVEL * +([0-9]+)" "\\1"
            CUDNN_VERSION_PATCH "${CUDNN_VERSION_PATCH}")
 
-    if(NOT CUDNN_VERSION_MAJOR)
+    if (NOT CUDNN_VERSION_MAJOR)
       set(CUDNN_VERSION "???")
-    else()
+    else ()
       set(CUDNN_VERSION "${CUDNN_VERSION_MAJOR}.${CUDNN_VERSION_MINOR}.${CUDNN_VERSION_PATCH}")
-    endif()
+    endif ()
 
     message(STATUS "Found cuDNN: ver. ${CUDNN_VERSION} found (include: ${CUDNN_INCLUDE}, library: ${CUDNN_LIBRARY})")
 
     string(COMPARE LESS "${CUDNN_VERSION_MAJOR}" 3 cuDNNVersionIncompatible)
-    if(cuDNNVersionIncompatible)
+    if (cuDNNVersionIncompatible)
       message(FATAL_ERROR "cuDNN version >3 is required.")
-    endif()
+    endif ()
 
     set(CUDNN_VERSION "${CUDNN_VERSION}" PARENT_SCOPE)
     mark_as_advanced(CUDNN_INCLUDE CUDNN_LIBRARY CUDNN_ROOT)
 
-  endif()
+  endif ()
 endfunction()
 
 ################################################################################################
@@ -245,9 +282,9 @@ endfunction()
 find_package(CUDA 5.5 QUIET)
 find_cuda_helper_libs(curand)  # cmake 2.8.7 compatibility which doesn't search for curand
 
-if(NOT CUDA_FOUND)
+if (NOT CUDA_FOUND)
   return()
-endif()
+endif ()
 
 set(HAVE_CUDA TRUE)
 message(STATUS "CUDA detected: " ${CUDA_VERSION})
@@ -256,14 +293,17 @@ list(APPEND Caffe_LINKER_LIBS PUBLIC ${CUDA_CUDART_LIBRARY}
                                      ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES})
 
 # cudnn detection
-if(USE_CUDNN)
+if (USE_CUDNN)
   detect_cuDNN()
-  if(HAVE_CUDNN)
+  if (HAVE_CUDNN)
     list(APPEND Caffe_DEFINITIONS PUBLIC -DUSE_CUDNN)
     list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${CUDNN_INCLUDE})
     list(APPEND Caffe_LINKER_LIBS PUBLIC ${CUDNN_LIBRARY})
-  endif()
-endif()
+    if (USE_CUDNN_FRONTEND)
+        list(APPEND Caffe_DEFINITIONS PUBLIC -DUSE_CUDNN_FRONTEND)
+    endif ()
+  endif ()
+endif ()
 
 # setting nvcc arch flags
 caffe_select_nvcc_arch_flags(NVCC_FLAGS_EXTRA)
@@ -272,11 +312,11 @@ message(STATUS "Added CUDA NVCC flags for: ${NVCC_FLAGS_EXTRA_readable}")
 
 # Boost 1.55 workaround, see https://svn.boost.org/trac/boost/ticket/9392 or
 # https://github.com/ComputationalRadiationPhysics/picongpu/blob/master/src/picongpu/CMakeLists.txt
-if(Boost_VERSION EQUAL 105500)
+if (Boost_VERSION EQUAL 105500)
   message(STATUS "Cuda + Boost 1.55: Applying noinline work around")
   # avoid warning for CMake >= 2.8.12
   set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} \"-DBOOST_NOINLINE=__attribute__((noinline))\" ")
-endif()
+endif ()
 
 # disable some nvcc diagnostic that apears in boost, glog, glags, opencv, etc.
 foreach(diag cc_clobber_ignored integer_sign_change useless_using_declaration set_but_not_used)
@@ -284,20 +324,20 @@ foreach(diag cc_clobber_ignored integer_sign_change useless_using_declaration se
 endforeach()
 
 # setting default testing device
-if(NOT CUDA_TEST_DEVICE)
+if (NOT CUDA_TEST_DEVICE)
   set(CUDA_TEST_DEVICE -1)
-endif()
+endif ()
 
 mark_as_advanced(CUDA_BUILD_CUBIN CUDA_BUILD_EMULATION CUDA_VERBOSE_BUILD)
 mark_as_advanced(CUDA_SDK_ROOT_DIR CUDA_SEPARABLE_COMPILATION)
 
 # Handle clang/libc++ issue
-if(APPLE)
+if (APPLE)
   caffe_detect_darwin_version(OSX_VERSION)
 
   # OSX 10.9 and higher uses clang/libc++ by default which is incompatible with old CUDA toolkits
-  if(OSX_VERSION VERSION_GREATER 10.8)
+  if (OSX_VERSION VERSION_GREATER 10.8)
     # enabled by default if and only if CUDA version is less than 7.0
     caffe_option(USE_libstdcpp "Use libstdc++ instead of libc++" (CUDA_VERSION VERSION_LESS 7.0))
-  endif()
-endif()
+  endif ()
+endif ()

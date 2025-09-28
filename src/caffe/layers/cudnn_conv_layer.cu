@@ -10,6 +10,65 @@ __global__ void sync_conv_groups() { }
 template <typename Dtype>
 void CuDNNConvolutionLayer<Dtype>::Forward_gpu(
     const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+#if CUDNN_VERSION_MIN(8, 0, 0) && defined(USE_CUDNN_FRONTEND)
+  Dtype* weight = this->blobs_[0]->mutable_gpu_data();
+  for (int i = 0; i < bottom.size(); ++i) {
+    Dtype* bottom_data = bottom[i]->mutable_gpu_data();
+    Dtype* top_data = top[i]->mutable_gpu_data();
+
+    // Forward through cuDNN in parallel over groups.
+    for (int g = 0; g < this->group_; g++) {
+      // Setup variant pack desc. Links device ptrs to workspace.
+      cudnnBackendDescriptor_t variant_pack_raw_desc;
+      if (this->bias_term_) {
+        Dtype* bias_data = this->blobs_[1]->mutable_gpu_data();
+        void* data_ptrs[] = {bottom_data + bottom_offset_ * g,
+                              top_data + top_offset_ * g,
+                              weight + this->weight_offset_ * g,
+                              bias_data + bias_offset_ * g,
+                              bias_data + bias_offset_ * g};
+        int64_t uids[] = {'x', 'y', 'w', 'z', 'b'};
+        variant_pack_raw_desc = cudnn_frontend::VariantPackBuilder()
+                        .setWorkspacePointer(this->workspaceData)
+                        .setDataPointers(5, data_ptrs)
+                        .setUids(5, uids)
+                        .build()
+                        .get_raw_desc();
+      }
+      else {
+        void* data_ptrs[] = {bottom_data + bottom_offset_ * g,
+                              top_data + top_offset_ * g,
+                              weight + this->weight_offset_ * g};
+        int64_t uids[] = {'x', 'y', 'w'};
+        variant_pack_raw_desc = cudnn_frontend::VariantPackBuilder()
+                        .setWorkspacePointer(this->workspaceData)
+                        .setDataPointers(3, data_ptrs)
+                        .setUids(3, uids)
+                        .build()
+                        .get_raw_desc();
+      }
+      
+      const cudnn_frontend::ExecutionPlan *cached_plan;
+      plan_cache_->get_plan_from_cache(*(op_graph_), cached_plan);
+
+      // Exceute graph API convolution.
+      cudnnStatus_t status = cudnnBackendExecute(handle_[0],
+                                                 cached_plan->get_raw_desc(),
+                                                 // cached_plan->get_raw_desc(),
+                                                 variant_pack_raw_desc);
+      cudnn_frontend::throw_if([status]()
+                                { return (status != CUDNN_STATUS_SUCCESS); },
+                                "Plan execute error",
+                                status);
+    }
+
+    // Synchronize the work across groups, each of which went into its own
+    // stream, by launching an empty kernel into the default (null) stream.
+    // NOLINT_NEXT_LINE(whitespace/operators)
+    sync_conv_groups<<<1, 1>>>();
+  }
+}
+#else
   const Dtype* weight = this->blobs_[0]->gpu_data();
   for (int i = 0; i < bottom.size(); ++i) {
     const Dtype* bottom_data = bottom[i]->gpu_data();
@@ -44,6 +103,7 @@ void CuDNNConvolutionLayer<Dtype>::Forward_gpu(
     sync_conv_groups<<<1, 1>>>();
   }
 }
+#endif
 
 template <typename Dtype>
 void CuDNNConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,

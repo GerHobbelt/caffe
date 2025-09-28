@@ -2,12 +2,19 @@
 #define CAFFE_CUDNN_CONV_LAYER_HPP_
 
 #include <vector>
+#include <string>
+#include <stdexcept>
 
 #include "caffe/blob.hpp"
 #include "caffe/layer.hpp"
 #include "caffe/proto/caffe.pb.h"
 
 #include "caffe/layers/conv_layer.hpp"
+
+#if CUDNN_VERSION_MIN(8, 0, 0) && defined(USE_CUDNN_FRONTEND)
+#include "cudnn_frontend.h"
+#include "caffe/layers/cudnn_v8_utils.hpp"
+#endif
 
 namespace caffe {
 
@@ -30,7 +37,13 @@ template <typename Dtype>
 class CuDNNConvolutionLayer : public ConvolutionLayer<Dtype> {
  public:
   explicit CuDNNConvolutionLayer(const LayerParameter& param)
+#if CUDNN_VERSION_MIN(8, 0, 0) && defined(USE_CUDNN_FRONTEND)
+      : ConvolutionLayer<Dtype>(param),
+        handles_setup_(false), 
+        plan_cache_(new cudnn_frontend::ExecutionPlanCache(param.name().c_str())) {}
+#else
       : ConvolutionLayer<Dtype>(param), handles_setup_(false) {}
+#endif
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
@@ -43,6 +56,7 @@ class CuDNNConvolutionLayer : public ConvolutionLayer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
+
   bool handles_setup_;
   cudnnHandle_t* handle_;
   cudaStream_t*  stream_;
@@ -53,8 +67,8 @@ class CuDNNConvolutionLayer : public ConvolutionLayer<Dtype> {
   cudnnConvolutionBwdDataAlgo_t *bwd_data_algo_;
 
   vector<cudnnTensorDescriptor_t> bottom_descs_, top_descs_;
-  cudnnTensorDescriptor_t    bias_desc_;
-  cudnnFilterDescriptor_t      filter_desc_;
+  cudnnTensorDescriptor_t bias_desc_;
+  cudnnFilterDescriptor_t filter_desc_;
   vector<cudnnConvolutionDescriptor_t> conv_descs_;
   int bottom_offset_, top_offset_, bias_offset_;
 
@@ -64,6 +78,14 @@ class CuDNNConvolutionLayer : public ConvolutionLayer<Dtype> {
   size_t workspaceSizeInBytes;  // size of underlying storage
   void *workspaceData;  // underlying storage
   void **workspace;  // aliases into workspaceData
+
+#if CUDNN_VERSION_MIN(8, 0, 0) && defined(USE_CUDNN_FRONTEND)
+  int64_t workspace_size_;
+  cudnn_frontend::OperationGraph *op_graph_;
+  cudnn_frontend::ExecutionPlanCache *plan_cache_;
+  bool second_run_ = false;
+#endif
+
 };
 #endif
 

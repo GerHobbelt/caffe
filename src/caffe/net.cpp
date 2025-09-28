@@ -996,6 +996,18 @@ const shared_ptr<Layer<Dtype> > Net<Dtype>::layer_by_name(
   return layer_ptr;
 }
 
+template <typename Dtype>
+const int Net<Dtype>::layer_index_by_name(
+    const string& layer_name) const {
+  int layer_idx = -1;
+  if (has_layer(layer_name)) {
+    layer_idx = layer_names_index_.find(layer_name)->second;
+  } else {
+    LOG(WARNING) << "Unknown layer name " << layer_name;
+  }
+  return layer_idx;
+}
+
 INSTANTIATE_CLASS(Net);
 
 }  // namespace caffe

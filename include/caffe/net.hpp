@@ -213,6 +213,7 @@ class Net {
   const shared_ptr<Blob<Dtype> > blob_by_name(const string& blob_name) const;
   bool has_layer(const string& layer_name) const;
   const shared_ptr<Layer<Dtype> > layer_by_name(const string& layer_name) const;
+  const int layer_index_by_name(const string& layer_name) const;
 
   void set_debug_info(const bool value) { debug_info_ = value; }
 

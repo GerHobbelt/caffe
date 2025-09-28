@@ -29,6 +29,7 @@ include(cmake/ConfigGen.cmake)
 # ---[ Options
 caffe_option(CPU_ONLY  "Build Caffe without CUDA support" OFF) # TODO: rename to USE_CUDA
 caffe_option(USE_CUDNN "Build Caffe with cuDNN library support" ON IF NOT CPU_ONLY)
+caffe_option(USE_CUDNN_FRONTEND "Build Caffe with cudnn_frontend API" OFF)
 caffe_option(USE_NCCL "Build Caffe with NCCL library support" OFF)
 caffe_option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 caffe_option(BUILD_python "Build Python wrapper" ON)
@@ -48,9 +49,15 @@ caffe_option(USE_HDF5 "Build with hdf5" ON)
 # ---[ Dependencies
 include(cmake/Dependencies.cmake)
 
+# for cuDNN8
+if(USE_CUDNN_FRONTEND)
+  set(CUDNN8_FRONTEND_INCLUDE "" CACHE STRING "cudnn8_frontend include")
+  list(APPEND Caffe_INCLUDE_DIRS ${CUDNN8_FRONTEND_INCLUDE})
+endif()
+
 # ---[ Flags
 if(UNIX OR APPLE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -std=c++11")
 endif()
 
 caffe_set_caffe_link()
@@ -84,9 +91,11 @@ if(HAVE_CUDA)
   cuda_include_directories(${Caffe_INCLUDE_DIR} ${Caffe_SRC_DIR} ${Caffe_ALL_INCLUDE_DIRS})
 
   # add definitions to nvcc flags directly
-  set(Caffe_ALL_DEFINITIONS ${Caffe_DEFINITIONS})
-  list(REMOVE_ITEM Caffe_ALL_DEFINITIONS PRIVATE PUBLIC)
-  list(APPEND CUDA_NVCC_FLAGS ${Caffe_ALL_DEFINITIONS})
+  if(Caffe_DEFINITIONS)
+    set(Caffe_ALL_DEFINITIONS ${Caffe_DEFINITIONS})
+    list(REMOVE_ITEM Caffe_ALL_DEFINITIONS PRIVATE PUBLIC)
+    list(APPEND CUDA_NVCC_FLAGS ${Caffe_ALL_DEFINITIONS})
+  endif()
 endif()
 
 # ---[ Subdirectories
