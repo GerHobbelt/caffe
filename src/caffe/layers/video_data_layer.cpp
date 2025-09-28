@@ -1,6 +1,8 @@
 #ifdef USE_OPENCV
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/videoio/legacy/constants_c.h>
+
 
 #include <stdint.h>
 #include <algorithm>
