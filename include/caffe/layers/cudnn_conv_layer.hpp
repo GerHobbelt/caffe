@@ -58,12 +58,29 @@ class CuDNNConvolutionLayer : public ConvolutionLayer<Dtype> {
   vector<cudnnConvolutionDescriptor_t> conv_descs_;
   int bottom_offset_, top_offset_, bias_offset_;
 
+  int prev_num_;
+  int prev_channels_;
+  int prev_group_;
+  int prev_num_output_;
+  int prev_out_spatial_dim_;
+  int prev_width_;
+  int prev_width_out_;
+  int prev_height_;
+  int prev_height_out_;
+  int prev_pad_w_;
+  int prev_pad_h_;
+  int prev_stride_w_;
+  int prev_stride_h_;
+
   size_t *workspace_fwd_sizes_;
   size_t *workspace_bwd_data_sizes_;
   size_t *workspace_bwd_filter_sizes_;
   size_t workspaceSizeInBytes;  // size of underlying storage
   void *workspaceData;  // underlying storage
   void **workspace;  // aliases into workspaceData
+
+  int kernel_w_;
+  int kernel_h_;
 };
 #endif
 

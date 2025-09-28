@@ -16,6 +16,11 @@
 #include <utility>  // pair
 #include <vector>
 
+#ifdef _MSC_VER
+// fence this include inside VS specific macro
+// to avoid breaking the Linux Makefile build
+#include "caffe/export.hpp"
+#endif
 #include "caffe/util/device_alternate.hpp"
 
 // Convert macro to string
@@ -37,11 +42,20 @@ private:\
   classname(const classname&);\
   classname& operator=(const classname&)
 
+
+#ifndef _MSC_VER
+#define DEFINE_FORCE_LINK_SYMBOL(classname, token)
+#else
+#define DEFINE_FORCE_LINK_SYMBOL(classname, token) \
+  int g_caffe_force_link_##token##_##classname = 0
+#endif
+
 // Instantiate a class with float and double specifications.
 #define INSTANTIATE_CLASS(classname) \
   char gInstantiationGuard##classname; \
   template class classname<float>; \
-  template class classname<double>
+  template class classname<double>; \
+  DEFINE_FORCE_LINK_SYMBOL(classname, instantiate);
 
 #define INSTANTIATE_LAYER_GPU_FORWARD(classname) \
   template void classname<float>::Forward_gpu( \
@@ -49,7 +63,8 @@ private:\
       const std::vector<Blob<float>*>& top); \
   template void classname<double>::Forward_gpu( \
       const std::vector<Blob<double>*>& bottom, \
-      const std::vector<Blob<double>*>& top);
+      const std::vector<Blob<double>*>& top); \
+      DEFINE_FORCE_LINK_SYMBOL(classname, forward_gpu);
 
 #define INSTANTIATE_LAYER_GPU_BACKWARD(classname) \
   template void classname<float>::Backward_gpu( \
@@ -59,7 +74,8 @@ private:\
   template void classname<double>::Backward_gpu( \
       const std::vector<Blob<double>*>& top, \
       const std::vector<bool>& propagate_down, \
-      const std::vector<Blob<double>*>& bottom)
+      const std::vector<Blob<double>*>& bottom); \
+      DEFINE_FORCE_LINK_SYMBOL(classname, backward_gpu);
 
 #define INSTANTIATE_LAYER_GPU_FUNCS(classname) \
   INSTANTIATE_LAYER_GPU_FORWARD(classname); \
@@ -103,12 +119,13 @@ class Caffe {
  public:
   ~Caffe();
 
+  enum Brew { CPU, GPU };
+
   // Thread local context for Caffe. Moved to common.cpp instead of
   // including boost/thread.hpp to avoid a boost/NVCC issues (#1009, #1010)
   // on OSX. Also fails on Linux with CUDA 7.0.18.
   static Caffe& Get();
-
-  enum Brew { CPU, GPU };
+  static Caffe& Get(Brew m);
 
   // This random number generator facade hides boost and CUDA rng
   // implementation from one another (for cross-platform compatibility).
@@ -132,8 +149,10 @@ class Caffe {
     return *(Get().random_generator_);
   }
 #ifndef CPU_ONLY
-  inline static cublasHandle_t cublas_handle() { return Get().cublas_handle_; }
+  void init_cu_handle();
+  inline static cublasHandle_t cublas_handle() { Get().init_cu_handle(); return Get().cublas_handle_; }
   inline static curandGenerator_t curand_generator() {
+    Get().init_cu_handle();
     return Get().curand_generator_;
   }
 #endif
@@ -145,7 +164,7 @@ class Caffe {
   // into the program since that may cause allocation of pinned memory being
   // freed in a non-pinned way, which may cause problems - I haven't verified
   // it personally but better to note it here in the header file.
-  inline static void set_mode(Brew mode) { Get().mode_ = mode; }
+  static void set_mode(Brew mode);
   // Sets the random seed of both boost and curand
   static void set_random_seed(const unsigned int seed);
   // Sets the device. Since we have cublas and curand stuff, set device also
@@ -164,6 +183,16 @@ class Caffe {
   inline static bool root_solver() { return Get().root_solver_; }
   inline static void set_root_solver(bool val) { Get().root_solver_ = val; }
 
+  static void SetGetcuDNNAlgorithmFunc(int (*func)(const char *layer_name, int num_input, int num_output, int batch_size,
+	  int width, int height, int kernel_w, int kernel_h, int pad_w, int pad_h, int stride_w, int stride_h));
+  static int GetcuDNNAlgorithm(const char *layer_name, int num_input, int num_output, int batch_size,
+	  int width, int height, int kernel_w, int kernel_h, int pad_w, int pad_h, int stride_w, int stride_h);
+
+  static void SetSetcuDNNAlgorithmFunc(void(*func)(int algo, const char *layer_name, int num_input, int num_output, int batch_size,
+	  int width, int height, int kernel_w, int kernel_h, int pad_w, int pad_h, int stride_w, int stride_h));
+  static void SetcuDNNAlgorithm(int algo, const char *layer_name, int num_input, int num_output, int batch_size,
+	  int width, int height, int kernel_w, int kernel_h, int pad_w, int pad_h, int stride_w, int stride_h);
+
  protected:
 #ifndef CPU_ONLY
   cublasHandle_t cublas_handle_;
@@ -178,6 +207,7 @@ class Caffe {
  private:
   // The private constructor to avoid duplicate instantiation.
   Caffe();
+  Caffe(Brew m);
 
   DISABLE_COPY_AND_ASSIGN(Caffe);
 };

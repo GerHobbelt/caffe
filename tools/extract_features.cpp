@@ -19,6 +19,11 @@ using caffe::Net;
 using std::string;
 namespace db = caffe::db;
 
+#ifdef _MSC_VER
+#define uint uint32_t
+#endif  // _MSC_VER
+
+
 template<typename Dtype>
 int feature_extraction_pipeline(int argc, char** argv);
 
@@ -130,7 +135,7 @@ int feature_extraction_pipeline(int argc, char** argv) {
     txns.push_back(txn);
   }
 
-  LOG(ERROR)<< "Extacting Features";
+  LOG(ERROR)<< "Extracting Features";
 
   Datum datum;
   std::vector<int> image_indices(num_features, 0);

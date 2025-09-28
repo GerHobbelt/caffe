@@ -4,7 +4,7 @@ endif()
 
 # Known NVIDIA GPU achitectures Caffe can be compiled for.
 # This list will be used for CUDA_ARCH_NAME = All option
-set(Caffe_known_gpu_archs "20 21(20) 30 35 50")
+set(Caffe_known_gpu_archs "35 50 60 61 62 70 72")
 
 ################################################################################################
 # A function for automatic detection of GPUs installed  (if autodetection is enabled)
@@ -36,6 +36,10 @@ function(caffe_detect_installed_gpus out_variable)
                     ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     if(__nvcc_res EQUAL 0)
+      # nvcc outputs text containing line breaks when building with MSVC.
+      # The line below prevents CMake from inserting a variable with line
+      # breaks in the cache
+      string(REGEX MATCH "([1-9].[0-9])" __nvcc_out "${__nvcc_out}")
       string(REPLACE "2.1" "2.1(2.0)" __nvcc_out "${__nvcc_out}")
       set(CUDA_gpu_detect_output ${__nvcc_out} CACHE INTERNAL "Returned GPU architetures from caffe_detect_gpus tool" FORCE)
     endif()
@@ -171,19 +175,37 @@ function(detect_cuDNN)
   set(CUDNN_ROOT "" CACHE PATH "CUDNN root folder")
 
   find_path(CUDNN_INCLUDE cudnn.h
-            PATHS ${CUDNN_ROOT} $ENV{CUDNN_ROOT} ${CUDA_TOOLKIT_INCLUDE}
+            PATHS ${CUDNN_ROOT} $ENV{CUDNN_ROOT} "${CUDNN_ROOT}/include" "$ENV{CUDNN_ROOT}/include" ${CUDA_TOOLKIT_INCLUDE}
             DOC "Path to cuDNN include directory." )
 
+  # dynamic libs have different suffix in mac and linux
+  if(APPLE)
+    set(CUDNN_LIB_NAME "libcudnn.dylib")
+  elseif(MSVC)
+    set(CUDNN_LIB_NAME cudnn.lib)
+  else()
+    set(CUDNN_LIB_NAME "libcudnn.so")
+  endif()
+
   get_filename_component(__libpath_hist ${CUDA_CUDART_LIBRARY} PATH)
-  find_library(CUDNN_LIBRARY NAMES libcudnn.so # libcudnn_static.a
-                             PATHS ${CUDNN_ROOT} $ENV{CUDNN_ROOT} ${CUDNN_INCLUDE} ${__libpath_hist}
+  set (FIND_CUDNN_LIBRARY_PATHS ${CUDNN_ROOT} $ENV{CUDNN_ROOT} ${CUDNN_INCLUDE} "${CUDNN_ROOT}/lib" "$ENV{CUDNN_ROOT}/lib" ${__libpath_hist})
+  if(CMAKE_LIBRARY_ARCHITECTURE)
+    list(APPEND FIND_CUDNN_LIBRARY_PATHS "${CUDNN_ROOT}/lib/${CMAKE_LIBRARY_ARCHITECTURE}" "$ENV{CUDNN_ROOT}/lib/${CMAKE_LIBRARY_ARCHITECTURE}")
+  endif() 
+
+  find_library(CUDNN_LIBRARY NAMES ${CUDNN_LIB_NAME}
+                             PATHS ${FIND_CUDNN_LIBRARY_PATHS}
                              DOC "Path to cuDNN library.")
 
   if(CUDNN_INCLUDE AND CUDNN_LIBRARY)
     set(HAVE_CUDNN  TRUE PARENT_SCOPE)
     set(CUDNN_FOUND TRUE PARENT_SCOPE)
 
-    file(READ ${CUDNN_INCLUDE}/cudnn.h CUDNN_VERSION_FILE_CONTENTS)
+    if (EXISTS ${CUDNN_INCLUDE}/cudnn_version.h)
+      file(READ ${CUDNN_INCLUDE}/cudnn_version.h CUDNN_VERSION_FILE_CONTENTS)
+    else()
+      file(READ ${CUDNN_INCLUDE}/cudnn.h CUDNN_VERSION_FILE_CONTENTS)
+    endif()
 
     # cuDNN v3 and beyond
     string(REGEX MATCH "define CUDNN_MAJOR * +([0-9]+)"

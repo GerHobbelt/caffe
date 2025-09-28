@@ -1,0 +1,94 @@
+## Refer to http://caffe.berkeleyvision.org/installation.html
+# Contributions simplifying and improving our build system are welcome!
+
+# cuDNN acceleration switch (comment to build without cuDNN).
+USE_CUDNN := 1
+
+# CPU-only switch (uncomment to build without GPU support).
+# CPU_ONLY := 1
+CXX := /usr/bin/g++
+CC := /usr/bin/gcc
+CUDA_NVCC_FLAGS := -D_FORCE_INLINES
+CXXFLAGS := -std=c++11 -fpermissive
+
+# To customize your choice of compiler, uncomment and set the following.
+# N.B. the default for Linux is g++ and the default for OSX is clang++
+# CUSTOM_CXX := g++
+
+# CUDA directory contains bin/ and lib/ directories that we need.
+CUDA_DIR := /usr/local/cuda
+# On Ubuntu 14.04, if cuda tools are installed via
+# "sudo apt-get install nvidia-cuda-toolkit" then use this instead:
+# CUDA_DIR := /usr
+
+# CUDA architecture setting: going with all of them.
+# For CUDA < 6.0, comment the *_50 lines for compatibility.
+# If you using GTX1080 and CUDA 8.0, use -gencode arch=compute_61,code=sm_61 
+CUDA_ARCH := -gencode arch=compute_52,code=sm_52 \
+	  -gencode arch=compute_60,code=sm_60 \
+	  -gencode arch=compute_61,code=sm_61 \
+	  -gencode arch=compute_70,code=sm_70 \
+	  -gencode arch=compute_75,code=sm_75 \
+	  -gencode arch=compute_80,code=sm_80 \
+	  -gencode arch=compute_86,code=sm_86
+
+# BLAS choice:
+# atlas for ATLAS (default)
+# mkl for MKL
+# open for OpenBlas
+#BLAS := atlas
+BLAS := open
+# Custom (MKL/ATLAS/OpenBLAS) include and lib directories.
+# Leave commented to accept the defaults for your choice of BLAS
+# (which should work)!
+# BLAS_INCLUDE := /path/to/your/blas
+# BLAS_LIB := /path/to/your/blas
+
+# This is required only if you will compile the matlab interface.
+# MATLAB directory should contain the mex binary in /bin.
+# MATLAB_DIR := /usr/local
+# MATLAB_DIR := /Applications/MATLAB_R2012b.app
+
+# NOTE: this is required only if you will compile the python interface.
+# We need to be able to find Python.h and numpy/arrayobject.h.
+PYTHON_INCLUDE := /usr/include/python2.7 \
+		/usr/lib/python2.7/dist-packages/numpy/core/include \
+		/usr/local/lib/python2.7/dist-packages/numpy/core/include
+# Anaconda Python distribution is quite popular. Include path:
+# Verify anaconda location, sometimes it's in root.
+# ANACONDA_HOME := $(HOME)/anaconda
+# PYTHON_INCLUDE := $(ANACONDA_HOME)/include \
+		# $(ANACONDA_HOME)/include/python2.7 \
+		# $(ANACONDA_HOME)/lib/python2.7/site-packages/numpy/core/include \
+
+# We need to be able to find libpythonX.X.so or .dylib.
+PYTHON_LIB := /usr/lib
+# PYTHON_LIB := $(ANACONDA_HOME)/lib
+
+# Uncomment to support layers written in Python (will link against Python libs)
+# WITH_PYTHON_LAYER := 1
+
+# Whatever else you find you need goes here.
+#INCLUDE_DIRS := $(PYTHON_INCLUDE) /opt/caffe/include /usr/local/include /usr/include/hdf5/serial
+#LIBRARY_DIRS := $(PYTHON_LIB) /opt/caffe/lib /usr/local/lib /usr/lib /usr/lib/x86_64-linux-gnu/hdf5/serial/
+INCLUDE_DIRS := $(PYTHON_INCLUDE) /usr/local/include /usr/include/hdf5/serial
+LIBRARY_DIRS := $(PYTHON_LIB) /usr/local/lib /usr/lib /usr/lib/x86_64-linux-gnu/hdf5/serial/
+
+# Uncomment to use `pkg-config` to specify OpenCV library paths.
+# (Usually not necessary -- OpenCV libraries are normally installed in one of the above $LIBRARY_DIRS.)
+USE_PKG_CONFIG := 1
+
+BUILD_DIR := build
+DISTRIBUTE_DIR := distribute
+
+# Uncomment for debugging. Does not work on OSX due to https://github.com/BVLC/caffe/issues/171
+# DEBUG := 1
+
+# The ID of the GPU that 'make runtest' will use to run unit tests.
+TEST_GPUID := 0
+
+# enable pretty build (comment to see full commands)
+Q ?= @
+
+# shared object suffix name to differentiate branches
+LIBRARY_NAME_SUFFIX := -nv

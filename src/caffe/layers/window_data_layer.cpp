@@ -265,6 +265,9 @@ void WindowDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   const int num_samples[2] = { batch_size - num_fg, num_fg };
 
   int item_id = 0;
+  CHECK_GT(fg_windows_.size(), 0);
+  CHECK_GT(bg_windows_.size(), 0);
+
   // sample from bg set then fg set
   for (int is_fg = 0; is_fg < 2; ++is_fg) {
     for (int dummy = 0; dummy < num_samples[is_fg]; ++dummy) {
@@ -287,7 +290,7 @@ void WindowDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
           image_database_cache_[window[WindowDataLayer<Dtype>::IMAGE_INDEX]];
         cv_img = DecodeDatumToCVMat(image_cached.second, true);
       } else {
-        cv_img = cv::imread(image.first, CV_LOAD_IMAGE_COLOR);
+        cv_img = cv::imread(image.first, cv::IMREAD_COLOR);
         if (!cv_img.data) {
           LOG(ERROR) << "Could not open or find file " << image.first;
           return;

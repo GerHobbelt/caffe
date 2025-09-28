@@ -1,6 +1,6 @@
 /**
  * @brief A layer factory that allows one to register layers.
- * During runtime, registered layers could be called by passing a LayerParameter
+ * During runtime, registered layers can be called by passing a LayerParameter
  * protobuffer to the CreateLayer function:
  *
  *     LayerRegistry<Dtype>::CreateLayer(param);
@@ -123,10 +123,10 @@ class LayerRegisterer {
   }
 };
 
-
 #define REGISTER_LAYER_CREATOR(type, creator)                                  \
   static LayerRegisterer<float> g_creator_f_##type(#type, creator<float>);     \
-  static LayerRegisterer<double> g_creator_d_##type(#type, creator<double>)    \
+  static LayerRegisterer<double> g_creator_d_##type(#type, creator<double>);   \
+  DEFINE_FORCE_LINK_SYMBOL(type, layer_creator);
 
 #define REGISTER_LAYER_CLASS(type)                                             \
   template <typename Dtype>                                                    \

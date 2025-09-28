@@ -2,6 +2,9 @@
 set(Caffe_LINKER_LIBS "")
 
 # ---[ Boost
+if(MSVC)
+    add_definitions(-DBOOST_ALL_NO_LIB)    
+endif()
 find_package(Boost 1.46 REQUIRED COMPONENTS system thread filesystem)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 list(APPEND Caffe_LINKER_LIBS ${Boost_LIBRARIES})
@@ -27,6 +30,31 @@ include(cmake/ProtoBuf.cmake)
 find_package(HDF5 COMPONENTS HL REQUIRED)
 include_directories(SYSTEM ${HDF5_INCLUDE_DIRS} ${HDF5_HL_INCLUDE_DIR})
 list(APPEND Caffe_LINKER_LIBS ${HDF5_LIBRARIES})
+
+list(APPEND Caffe_LINKER_LIBS ${HDF5_HL_LIBRARIES}) #fix undefined reference to H5LT*****
+
+#find_package(HDF5 COMPONENTS C HL REQUIRED)
+#include_directories(SYSTEM ${HDF5_INCLUDE_DIRS} ${HDF5_HL_INCLUDE_DIR})
+#list(APPEND Caffe_LINKER_LIBS ${HDF5_C_STATIC_LIBRARY} ${HDF5_HL_STATIC_LIBRARY})
+
+## Avoid the CMake bug http://www.itk.org/Bug/print_bug_page.php?bug_id=1101
+#get_property(_HDF5_C_INTERFACE_LINK_LIBRARIES
+#             TARGET   ${HDF5_C_STATIC_LIBRARY}
+#             PROPERTY INTERFACE_LINK_LIBRARIES)
+#if("${_HDF5_C_INTERFACE_LINK_LIBRARIES}" MATCHES ".*zlib.*")
+#  foreach(LIB ${_HDF5_C_INTERFACE_LINK_LIBRARIES})
+#    find_package(${LIB} QUIET CONFIG)
+#    if(NOT ${${LIB}_FOUND})
+#      find_package(${LIB} QUIET)
+#    endif()
+#  endforeach()
+#  if(NOT ZLIB_FOUND)
+#    find_package(zlib QUIET CONFIG)
+#    if(NOT ZLIB_FOUND)
+#      find_package(zlib QUIET)
+#    endif()
+#  endif()
+#endif()
 
 # ---[ LMDB
 if(USE_LMDB)
@@ -102,6 +130,12 @@ elseif(APPLE)
   find_package(vecLib REQUIRED)
   include_directories(SYSTEM ${vecLib_INCLUDE_DIR})
   list(APPEND Caffe_LINKER_LIBS ${vecLib_LINKER_LIBS})
+
+  if(VECLIB_FOUND)
+    if(NOT vecLib_INCLUDE_DIR MATCHES "^/System/Library/Frameworks/vecLib.framework.*")
+      add_definitions(-DUSE_ACCELERATE)
+    endif()
+  endif()
 endif()
 
 # ---[ Python
@@ -140,9 +174,85 @@ if(BUILD_python)
     find_package(NumPy 1.7.1)
     find_package(Boost 1.46 COMPONENTS python)
   endif()
+  
+  if(PYTHONLIBS_FOUND AND WIN32 AND NOT EXISTS ${PYTHON_DEBUG_LIBRARY})
+    # replace python??_d.lib to python??.lib when not exist python??_d.lib for Windows
+    function(get_library_path LIBRARIES LIBRARIE_type LIBRARIE_path)
+      if(NOT LIBRARIES)
+        return()
+      endif()
+
+      set(${LIBRARIE_path} "" PARENT_SCOPE)
+
+      list(LENGTH LIBRARIES _LIBRARIES_len)
+
+      if(_LIBRARIES_len LESS 2)
+        return()
+      endif()
+
+      math(EXPR _LIBRARIES_elm_num "${_LIBRARIES_len} / 2 - 1")
+    
+      foreach(val RANGE ${_LIBRARIES_elm_num})
+        math(EXPR val1 "${val} * 2")
+        math(EXPR val2 "${val1} + 1")
+
+        list(GET LIBRARIES ${val1} _LIBRARIES_type)
+        list(GET LIBRARIES ${val2} _LIBRARIES_path)
+
+        if(${_LIBRARIES_type} STREQUAL ${LIBRARIE_type})
+          set(${LIBRARIE_path} "${_LIBRARIES_path}" PARENT_SCOPE)
+        endif()
+      endforeach()
+    endfunction()
+
+    function(set_library_path LIBRARIES Target_LIBRARIE_type Target_LIBRARIE_path DST_NEW_LIBRARIES)
+      if(NOT LIBRARIES)
+        return()
+      endif()
+
+      set(NEW_LIBRARIES)
+
+      list(LENGTH LIBRARIES _LIBRARIES_len)
+
+      if(_LIBRARIES_len LESS 2)
+        return()
+      endif()
+
+      math(EXPR _LIBRARIES_elm_num "${_LIBRARIES_len} / 2 - 1")
+
+      foreach(val RANGE ${_LIBRARIES_elm_num})
+        math(EXPR val1 "${val} * 2")
+        math(EXPR val2 "${val1} + 1")
+
+        list(GET LIBRARIES ${val1} _LIBRARIES_type)
+        list(GET LIBRARIES ${val2} _LIBRARIES_path)
+
+        if(${_LIBRARIES_type} STREQUAL ${Target_LIBRARIE_type})
+          list(APPEND NEW_LIBRARIES ${_LIBRARIES_type} ${Target_LIBRARIE_path})
+        else()
+          list(APPEND NEW_LIBRARIES ${_LIBRARIES_type} ${_LIBRARIES_path})
+        endif()
+      endforeach()
+
+      set(${DST_NEW_LIBRARIES} "${NEW_LIBRARIES}" PARENT_SCOPE)
+    endfunction()
+
+    get_library_path("${PYTHON_LIBRARIES}" "optimized" _optimized_PYTHON_LIBRARIE)
+
+    if(_optimized_PYTHON_LIBRARIE AND NOT "${PYTHON_DEBUG_LIBRARY}" STREQUAL "${_optimized_PYTHON_LIBRARIE}")
+      set_library_path("${PYTHON_LIBRARIES}" "debug" ${_optimized_PYTHON_LIBRARIE} PYTHON_LIBRARIES)
+    endif()
+  endif()
+
   if(PYTHONLIBS_FOUND AND NUMPY_FOUND AND Boost_PYTHON_FOUND)
     set(HAVE_PYTHON TRUE)
     if(BUILD_python_layer)
+      if(Boost_USE_STATIC_LIBS AND MSVC)
+        add_definitions(-DBOOST_PYTHON_STATIC_LIB)
+      endif()
+      if(MSVC)
+        add_definitions(-DMS_NO_COREDLL -DPy_ENABLE_SHARED=1)
+      endif()
       add_definitions(-DWITH_PYTHON_LAYER)
       include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
       list(APPEND Caffe_LINKER_LIBS ${PYTHON_LIBRARIES} ${Boost_LIBRARIES})

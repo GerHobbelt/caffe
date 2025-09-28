@@ -4,8 +4,23 @@
 
 namespace caffe {
 
-// Copy (one line per thread) from one array to another, with arbitrary
-// strides in the last two dimensions.
+
+//__device__ static int compute_uncropped_index(
+//    int index,
+//    const int ndims,
+//    const int* src_strides,
+//    const int* dest_strides,
+//    const int* offsets) {
+//  int dest_index = index;
+//  int src_index = 0;
+//  for (int i = 0; i < ndims; ++i) {
+//      int coord = dest_index / dest_strides[i];
+//      dest_index -= coord * dest_strides[i];
+//      src_index += src_strides[i] * (coord + offsets[i]);
+//  }
+//  return src_index;
+//}
+
 template <typename Dtype>
 __global__ void copy_kernel(const int n, const int height, const int width,
     const int src_outer_stride, const int src_inner_stride,
@@ -22,15 +37,6 @@ __global__ void copy_kernel(const int n, const int height, const int width,
   }
 }
 
-// recursive copy function, this function is similar to crop_copy but loops
-// over all but the last two dimensions. It is implemented this way to allow
-// for ND cropping while still relying on a CUDA kernel for the innermost
-// two dimensions for performance reasons.
-// An alternative way to implement ND cropping relying more on the kernel
-// would require passing offsets to the kernel, which is a bit problematic
-// because it is of variable length. Since in the standard (N,C,W,H) case
-// N,C are usually not cropped a speedup could be achieved by not looping
-// the application of the copy_kernel around these dimensions.
 template <typename Dtype>
 void CropLayer<Dtype>::crop_copy_gpu(const vector<Blob<Dtype>*>& bottom,
              const vector<Blob<Dtype>*>& top,
