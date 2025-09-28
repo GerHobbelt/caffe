@@ -1479,6 +1479,8 @@ message PriorBoxParameter {
   optional float step_h = 11;
   optional float step_w = 12;
 
+  optional bool use_default_aspect_ratio = 16 [default = true];
+
   // Offset to the top left corner of each cell.
   optional float offset = 13 [default = 0.5];
 }
