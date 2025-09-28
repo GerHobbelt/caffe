@@ -10,6 +10,7 @@
 #include "caffe/common.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/solver.hpp"
+#include "caffe/util/io.hpp"
 
 #include "caffe/test/test_caffe_main.hpp"
 
@@ -23,11 +24,14 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   GradientBasedSolverTest() :
-      seed_(1701), num_(4), channels_(3), height_(10), width_(10) {}
+      seed_(1701), num_(4), channels_(3), height_(10), width_(10),
+      constant_data_(false), share_(false) {}
 
+  string snapshot_prefix_;
   shared_ptr<SGDSolver<Dtype> > solver_;
   int seed_;
   int num_, channels_, height_, width_;
+  bool constant_data_, share_;
   Dtype delta_;  // Stability constant for AdaGrad.
 
   virtual SolverParameter_SolverType solver_type() = 0;
@@ -36,9 +40,6 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
   virtual void InitSolverFromProtoString(const string& proto) {
     SolverParameter param;
     CHECK(google::protobuf::TextFormat::ParseFromString(proto, &param));
-    // Disable saving a final snapshot so the tests don't pollute the user's
-    // working directory with useless snapshots.
-    param.set_snapshot_after_train(false);
     // Set the solver_mode according to current Caffe::mode.
     switch (Caffe::mode()) {
       case Caffe::CPU:
@@ -51,15 +52,18 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
         LOG(FATAL) << "Unknown Caffe mode: " << Caffe::mode();
     }
     InitSolver(param);
-    delta_ = (solver_type() == SolverParameter_SolverType_ADAGRAD) ?
-         param.delta() : 0;
+    delta_ = (solver_type() == SolverParameter_SolverType_ADAGRAD ||
+        solver_type() == SolverParameter_SolverType_RMSPROP) ?
+        param.delta() : 0;
   }
 
-  void RunLeastSquaresSolver(const Dtype learning_rate,
-      const Dtype weight_decay, const Dtype momentum, const int num_iters,
-      const int iter_size = 1) {
+  string RunLeastSquaresSolver(const Dtype learning_rate,
+      const Dtype weight_decay, const Dtype momentum, const Dtype rms_decay,
+      const int num_iters, const int iter_size = 1, const bool snapshot = false,
+      const char* from_snapshot = NULL) {
     ostringstream proto;
     proto <<
+       "snapshot_after_train: " << snapshot << " "
        "max_iter: " << num_iters << " "
        "base_lr: " << learning_rate << " "
        "lr_policy: 'fixed' "
@@ -78,7 +82,9 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
        "      height: 1 "
        "      width: 1 "
        "      data_filler { "
-       "        type: 'constant' "
+       "        type: '" << string(constant_data_ ? "constant" : "gaussian")
+                         << "' "
+       "        std: 1.0 "
        "        value: 1.0 "
        "      } "
        "      data_filler { "
@@ -88,10 +94,26 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
        "    } "
        "    top: 'data' "
        "    top: 'targets' "
-       "  } "
+       "  } ";
+    if (share_) {
+      proto <<
+         "  layer { "
+         "    name: 'slice' "
+         "    type: 'Slice' "
+         "    bottom: 'data' "
+         "    top: 'data1' "
+         "    top: 'data2' "
+         "    slice_param { "
+         "      axis: 0 "
+         "    } "
+         "  } ";
+    }
+    proto <<
        "  layer { "
        "    name: 'innerprod' "
        "    type: 'InnerProduct' "
+       "    param { name: 'weights' } "
+       "    param { name: 'bias' } "
        "    inner_product_param { "
        "      num_output: 1 "
        "      weight_filler { "
@@ -103,9 +125,42 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
        "        std: 1.0 "
        "      } "
        "    } "
-       "    bottom: 'data' "
-       "    top: 'innerprod' "
-       "  } "
+       "    bottom: '" << string(share_ ? "data1": "data") << "' "
+       "    top: '" << string(share_ ? "innerprod1": "innerprod") << "' "
+       "  } ";
+    if (share_) {
+      proto <<
+         "  layer { "
+         "    name: 'innerprod2' "
+         "    type: 'InnerProduct' "
+         "    param { name: 'weights' } "
+         "    param { name: 'bias' } "
+         "    inner_product_param { "
+         "      num_output: 1 "
+         "      weight_filler { "
+         "        type: 'gaussian' "
+         "        std: 1.0 "
+         "      } "
+         "      bias_filler { "
+         "        type: 'gaussian' "
+         "        std: 1.0 "
+         "      } "
+         "    } "
+         "    bottom: 'data2' "
+         "    top: 'innerprod2' "
+         "  } "
+         "  layer { "
+         "    name: 'concat' "
+         "    type: 'Concat' "
+         "    bottom: 'innerprod1' "
+         "    bottom: 'innerprod2' "
+         "    top: 'innerprod' "
+         "    concat_param { "
+         "      axis: 0 "
+         "    } "
+         "  } ";
+    }
+    proto <<
        "  layer { "
        "    name: 'loss' "
        "    type: 'EuclideanLoss' "
@@ -119,9 +174,33 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
     if (momentum != 0) {
       proto << "momentum: " << momentum << " ";
     }
+    if (rms_decay != 0) {
+      proto << "rms_decay: " << rms_decay << " ";
+    }
+    MakeTempDir(&snapshot_prefix_);
+    proto << "snapshot_prefix: '" << snapshot_prefix_ << "/' ";
+    if (snapshot) {
+      proto << "snapshot: " << num_iters << " ";
+    }
     Caffe::set_random_seed(this->seed_);
     this->InitSolverFromProtoString(proto.str());
+    Caffe::set_random_seed(this->seed_);
+    if (from_snapshot != NULL) {
+      this->solver_->Restore(from_snapshot);
+      vector<Blob<Dtype>*> empty_bottom_vec;
+      for (int i = 0; i < this->solver_->iter(); ++i) {
+        this->solver_->net()->Forward(empty_bottom_vec);
+      }
+    }
     this->solver_->Solve();
+    if (snapshot) {
+      ostringstream resume_file;
+      resume_file << snapshot_prefix_ << "/_iter_" << num_iters
+                  << ".solverstate";
+      string resume_filename = resume_file.str();
+      return resume_filename;
+    }
+    return string();
   }
 
   // Compute an update value given the current state of the train net,
@@ -129,7 +208,7 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
   // updated_params will store the updated weight and bias results,
   // using the blobs' diffs to hold the update values themselves.
   void ComputeLeastSquaresUpdate(const Dtype learning_rate,
-      const Dtype weight_decay, const Dtype momentum,
+      const Dtype weight_decay, const Dtype momentum, const Dtype rms_decay,
       vector<shared_ptr<Blob<Dtype> > >* updated_params) {
     const int N = num_;
     const int D = channels_ * height_ * width_;
@@ -212,6 +291,10 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
       case SolverParameter_SolverType_ADAGRAD:
         update_value /= std::sqrt(history_value + grad * grad) + delta_;
         break;
+      case SolverParameter_SolverType_RMSPROP:
+        update_value /= std::sqrt(rms_decay*history_value
+            + grad * grad * (1 - rms_decay)) + delta_;
+        break;
       default:
         LOG(FATAL) << "Unknown solver type: " << solver_type();
       }
@@ -277,12 +360,14 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
   }
 
   void CheckAccumulation(const Dtype kLearningRate, const Dtype kWeightDecay,
-      const Dtype kMomentum, const int kNumIters, const int kIterSize) {
+      const Dtype kMomentum, const Dtype rms_decay, const int kNumIters,
+      const int kIterSize) {
     const double kPrecision = 1e-2;
     const double kMinPrecision = 1e-7;
+    constant_data_ = true;
     // Solve without accumulation and save parameters.
     this->RunLeastSquaresSolver(kLearningRate, kWeightDecay, kMomentum,
-        kNumIters);
+        rms_decay, kNumIters);
     // Save parameters for comparison.
     Net<Dtype>& net = *this->solver_->net();
     const vector<shared_ptr<Blob<Dtype> > >& param_blobs =
@@ -294,7 +379,7 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
     }
     // Solve by equivalent accumulation of gradients over divided batches.
     this->RunLeastSquaresSolver(kLearningRate, kWeightDecay, kMomentum,
-        kNumIters, kIterSize);
+        rms_decay, kNumIters, kIterSize);
     Net<Dtype>& net_accum = *this->solver_->net();
     const vector<shared_ptr<Blob<Dtype> > >& accum_params =
         net_accum.layer_by_name("innerprod")->blobs();
@@ -332,21 +417,90 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
   // matches the solver's (K+1)th update.
   void TestLeastSquaresUpdate(const Dtype learning_rate = 1.0,
       const Dtype weight_decay = 0.0, const Dtype momentum = 0.0,
-      const int iter_to_check = 0) {
+      const Dtype rms_decay = 0.0, const int iter_to_check = 0) {
     // Initialize the solver and run K (= iter_to_check) solver iterations.
-    RunLeastSquaresSolver(learning_rate, weight_decay, momentum, iter_to_check);
+    RunLeastSquaresSolver(learning_rate, weight_decay, momentum, rms_decay,
+        iter_to_check);
 
     // Compute the (K+1)th update using the analytic least squares gradient.
     vector<shared_ptr<Blob<Dtype> > > updated_params;
     ComputeLeastSquaresUpdate(learning_rate, weight_decay, momentum,
-                              &updated_params);
+        rms_decay, &updated_params);
 
     // Reinitialize the solver and run K+1 solver iterations.
-    RunLeastSquaresSolver(learning_rate, weight_decay, momentum,
-                          iter_to_check + 1);
+    RunLeastSquaresSolver(learning_rate, weight_decay, momentum, rms_decay,
+        iter_to_check + 1);
 
     // Check that the solver's solution matches ours.
     CheckLeastSquaresUpdate(updated_params);
+  }
+
+  void TestSnapshot(const Dtype learning_rate = 1.0,
+      const Dtype weight_decay = 0.0, const Dtype momentum = 0.0,
+      const Dtype rms_decay = 0.0, const int num_iters = 1) {
+    // Run the solver for num_iters * 2 iterations.
+    const int total_num_iters = num_iters * 2;
+    bool snapshot = false;
+    const int kIterSize = 1;
+    RunLeastSquaresSolver(learning_rate, weight_decay, momentum, rms_decay,
+                          total_num_iters, kIterSize, snapshot);
+
+    // Save the resulting param values.
+    vector<shared_ptr<Blob<Dtype> > > param_copies;
+    const vector<Blob<Dtype>*>& orig_params =
+        solver_->net()->learnable_params();
+    param_copies.resize(orig_params.size());
+    for (int i = 0; i < orig_params.size(); ++i) {
+      param_copies[i].reset(new Blob<Dtype>());
+      const bool kReshape = true;
+      for (int copy_diff = false; copy_diff <= true; ++copy_diff) {
+        param_copies[i]->CopyFrom(*orig_params[i], copy_diff, kReshape);
+      }
+    }
+
+    // Save the solver history
+    vector<shared_ptr<Blob<Dtype> > > history_copies;
+    const vector<shared_ptr<Blob<Dtype> > >& orig_history = solver_->history();
+    history_copies.resize(orig_history.size());
+    for (int i = 0; i < orig_history.size(); ++i) {
+      history_copies[i].reset(new Blob<Dtype>());
+      const bool kReshape = true;
+      for (int copy_diff = false; copy_diff <= true; ++copy_diff) {
+        history_copies[i]->CopyFrom(*orig_history[i], copy_diff, kReshape);
+      }
+    }
+
+    // Run the solver for num_iters iterations and snapshot.
+    snapshot = true;
+    string snapshot_name = RunLeastSquaresSolver(learning_rate, weight_decay,
+        momentum, rms_decay, num_iters, kIterSize, snapshot);
+
+    // Reinitialize the solver and run for num_iters more iterations.
+    snapshot = false;
+    RunLeastSquaresSolver(learning_rate, weight_decay, momentum, rms_decay,
+        total_num_iters, kIterSize, snapshot, snapshot_name.c_str());
+
+    // Check that params now match.
+    const vector<Blob<Dtype>*>& params = solver_->net()->learnable_params();
+    for (int i = 0; i < params.size(); ++i) {
+      for (int j = 0; j < params[i]->count(); ++j) {
+        EXPECT_EQ(param_copies[i]->cpu_data()[j], params[i]->cpu_data()[j])
+            << "param " << i << " data differed at dim " << j;
+        EXPECT_EQ(param_copies[i]->cpu_diff()[j], params[i]->cpu_diff()[j])
+            << "param " << i << " diff differed at dim " << j;
+      }
+    }
+
+    // Check that history now matches.
+    const vector<shared_ptr<Blob<Dtype> > >& history = solver_->history();
+    for (int i = 0; i < history.size(); ++i) {
+      for (int j = 0; j < history[i]->count(); ++j) {
+        EXPECT_EQ(history_copies[i]->cpu_data()[j], history[i]->cpu_data()[j])
+            << "history blob " << i << " data differed at dim " << j;
+        EXPECT_EQ(history_copies[i]->cpu_diff()[j], history[i]->cpu_diff()[j])
+            << "history blob " << i << " diff differed at dim " << j;
+      }
+    }
   }
 };
 
@@ -371,62 +525,137 @@ TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdate) {
   this->TestLeastSquaresUpdate();
 }
 
-TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateLROneTenth) {
+TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateLROneHundredth) {
   typedef typename TypeParam::Dtype Dtype;
-  const Dtype kLearningRate = 0.1;
+  const Dtype kLearningRate = 0.01;
   this->TestLeastSquaresUpdate(kLearningRate);
 }
 
 TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateWithWeightDecay) {
   typedef typename TypeParam::Dtype Dtype;
-  const Dtype kLearningRate = 1.0;
+  const Dtype kLearningRate = 0.01;
   const Dtype kWeightDecay = 0.5;
-  this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay);
-}
-
-TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateWithMomentum) {
-  typedef typename TypeParam::Dtype Dtype;
-  const Dtype kLearningRate = 1.0;
-  const Dtype kWeightDecay = 0.0;
-  const Dtype kMomentum = 0.5;
+  const Dtype kMomentum = 0;
   const int kNumIters = 1;
   for (int i = 0; i <= kNumIters; ++i) {
     this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum, i);
   }
 }
 
-TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateWithMomentumMultiIter) {
+TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateWithWeightDecayMultiIter) {
   typedef typename TypeParam::Dtype Dtype;
-  const Dtype kLearningRate = 1.0;
-  const Dtype kWeightDecay = 0.0;
-  const Dtype kMomentum = 0.5;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0;
   const int kNumIters = 4;
   for (int i = 0; i <= kNumIters; ++i) {
     this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum, i);
+  }
+}
+
+TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateWithMomentum) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0;
+  const Dtype kMomentum = 0.5;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 1;
+  for (int i = 0; i <= kNumIters; ++i) {
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
+  }
+}
+
+TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateWithMomentumMultiIter) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0;
+  const Dtype kMomentum = 0.5;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  for (int i = 0; i <= kNumIters; ++i) {
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
   }
 }
 
 TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateWithEverything) {
   typedef typename TypeParam::Dtype Dtype;
   const Dtype kLearningRate = 0.01;
-  const Dtype kWeightDecay = 0.1;
-  const Dtype kMomentum = 0.9;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.5;
+  const Dtype kRMSDecay = 0;
   const int kNumIters = 4;
   for (int i = 0; i <= kNumIters; ++i) {
-    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum, i);
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
+  }
+}
+
+TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateWithEverythingShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.5;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  this->share_ = true;
+  for (int i = 0; i <= kNumIters; ++i) {
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
   }
 }
 
 TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateWithEverythingAccum) {
   typedef typename TypeParam::Dtype Dtype;
   const Dtype kLearningRate = 0.01;
-  const Dtype kWeightDecay = 0.1;
+  const Dtype kWeightDecay = 0.5;
   const Dtype kMomentum = 0.9;
+  const Dtype kRMSDecay = 0;
   const int kNumIters = 4;
   const int kIterSize = 2;
-  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kNumIters,
-      kIterSize);
+  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kRMSDecay,
+      kNumIters, kIterSize);
 }
+
+TYPED_TEST(SGDSolverTest, TestLeastSquaresUpdateWithEverythingAccumShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.9;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  const int kIterSize = 2;
+  this->share_ = true;
+  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kRMSDecay,
+      kNumIters, kIterSize);
+}
+
+TYPED_TEST(SGDSolverTest, TestSnapshot) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.9;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  for (int i = 1; i <= kNumIters; ++i) {
+    this->TestSnapshot(kLearningRate, kWeightDecay, kMomentum, kRMSDecay, i);
+  }
+}
+
+TYPED_TEST(SGDSolverTest, TestSnapshotShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.9;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  this->share_ = true;
+  for (int i = 1; i <= kNumIters; ++i) {
+    this->TestSnapshot(kLearningRate, kWeightDecay, kMomentum, kRMSDecay, i);
+  }
+}
+
 
 template <typename TypeParam>
 class AdaGradSolverTest : public GradientBasedSolverTest<TypeParam> {
@@ -447,15 +676,15 @@ TYPED_TEST(AdaGradSolverTest, TestAdaGradLeastSquaresUpdate) {
   this->TestLeastSquaresUpdate();
 }
 
-TYPED_TEST(AdaGradSolverTest, TestAdaGradLeastSquaresUpdateLROneTenth) {
+TYPED_TEST(AdaGradSolverTest, TestAdaGradLeastSquaresUpdateLROneHundredth) {
   typedef typename TypeParam::Dtype Dtype;
-  const Dtype kLearningRate = 0.1;
+  const Dtype kLearningRate = 0.01;
   this->TestLeastSquaresUpdate(kLearningRate);
 }
 
 TYPED_TEST(AdaGradSolverTest, TestAdaGradLeastSquaresUpdateWithWeightDecay) {
   typedef typename TypeParam::Dtype Dtype;
-  const Dtype kLearningRate = 1.0;
+  const Dtype kLearningRate = 0.01;
   const Dtype kWeightDecay = 0.5;
   this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay);
 }
@@ -463,24 +692,81 @@ TYPED_TEST(AdaGradSolverTest, TestAdaGradLeastSquaresUpdateWithWeightDecay) {
 TYPED_TEST(AdaGradSolverTest, TestAdaGradLeastSquaresUpdateWithEverything) {
   typedef typename TypeParam::Dtype Dtype;
   const Dtype kLearningRate = 0.01;
-  const Dtype kWeightDecay = 0.1;
-  const Dtype kMomentum = 0.0;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0;
+  const Dtype kRMSDecay = 0;
   const int kNumIters = 4;
   for (int i = 0; i <= kNumIters; ++i) {
-    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum, i);
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
+  }
+}
+
+TYPED_TEST(AdaGradSolverTest,
+      TestAdaGradLeastSquaresUpdateWithEverythingShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  this->share_ = true;
+  for (int i = 0; i <= kNumIters; ++i) {
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
   }
 }
 
 TYPED_TEST(AdaGradSolverTest, TestLeastSquaresUpdateWithEverythingAccum) {
   typedef typename TypeParam::Dtype Dtype;
   const Dtype kLearningRate = 0.01;
-  const Dtype kWeightDecay = 0.1;
-  const Dtype kMomentum = 0.0;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0;
+  const Dtype kRMSDecay = 0;
   const int kNumIters = 4;
   const int kIterSize = 2;
-  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kNumIters,
-      kIterSize);
+  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kRMSDecay,
+      kNumIters, kIterSize);
 }
+
+TYPED_TEST(AdaGradSolverTest, TestLeastSquaresUpdateWithEverythingAccumShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  const int kIterSize = 2;
+  this->share_ = true;
+  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kRMSDecay,
+      kNumIters, kIterSize);
+}
+
+TYPED_TEST(AdaGradSolverTest, TestSnapshot) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  for (int i = 1; i <= kNumIters; ++i) {
+    this->TestSnapshot(kLearningRate, kWeightDecay, kMomentum, kRMSDecay, i);
+  }
+}
+
+TYPED_TEST(AdaGradSolverTest, TestSnapshotShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  this->share_ = true;
+  for (int i = 1; i <= kNumIters; ++i) {
+    this->TestSnapshot(kLearningRate, kWeightDecay, kMomentum, kRMSDecay, i);
+  }
+}
+
 
 template <typename TypeParam>
 class NesterovSolverTest : public GradientBasedSolverTest<TypeParam> {
@@ -501,45 +787,61 @@ TYPED_TEST(NesterovSolverTest, TestNesterovLeastSquaresUpdate) {
   this->TestLeastSquaresUpdate();
 }
 
-TYPED_TEST(NesterovSolverTest, TestNesterovLeastSquaresUpdateLROneTenth) {
+TYPED_TEST(NesterovSolverTest, TestNesterovLeastSquaresUpdateLROneHundredth) {
   typedef typename TypeParam::Dtype Dtype;
-  const Dtype kLearningRate = 0.1;
+  const Dtype kLearningRate = 0.01;
   this->TestLeastSquaresUpdate(kLearningRate);
 }
 
 TYPED_TEST(NesterovSolverTest, TestNesterovLeastSquaresUpdateWithWeightDecay) {
   typedef typename TypeParam::Dtype Dtype;
-  const Dtype kLearningRate = 1.0;
+  const Dtype kLearningRate = 0.01;
   const Dtype kWeightDecay = 0.5;
   this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay);
 }
 
-TYPED_TEST(NesterovSolverTest, TestNesterovLeastSquaresUpdateWithMomentum) {
+TYPED_TEST(NesterovSolverTest,
+           TestNesterovLeastSquaresUpdateWithWeightDecayMultiIter) {
   typedef typename TypeParam::Dtype Dtype;
-  const Dtype kLearningRate = 1.0;
-  const Dtype kWeightDecay = 0.0;
-  const Dtype kMomentum = 0.5;
-  const int kNumIters = 1;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0;
+  const int kNumIters = 4;
   for (int i = 0; i <= kNumIters; ++i) {
     this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum, i);
   }
 }
 
+TYPED_TEST(NesterovSolverTest, TestNesterovLeastSquaresUpdateWithMomentum) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0;
+  const Dtype kMomentum = 0.5;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 1;
+  for (int i = 0; i <= kNumIters; ++i) {
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
+  }
+}
+
 TYPED_TEST(NesterovSolverTest, TestLeastSquaresUpdateWithMomentumMultiIter) {
   typedef typename TypeParam::Dtype Dtype;
-  const Dtype kLearningRate = 1.0;
-  const Dtype kWeightDecay = 0.0;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0;
   const Dtype kMomentum = 0.5;
+  const Dtype kRMSDecay = 0;
   const int kNumIters = 4;
   for (int i = 0; i <= kNumIters; ++i) {
-    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum, i);
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
   }
 }
 
 TYPED_TEST(NesterovSolverTest, TestNesterovLeastSquaresUpdateWithEverything) {
   typedef typename TypeParam::Dtype Dtype;
   const Dtype kLearningRate = 0.01;
-  const Dtype kWeightDecay = 0.1;
+  const Dtype kWeightDecay = 0.5;
   const Dtype kMomentum = 0.9;
   const int kNumIters = 4;
   for (int i = 0; i <= kNumIters; ++i) {
@@ -547,15 +849,182 @@ TYPED_TEST(NesterovSolverTest, TestNesterovLeastSquaresUpdateWithEverything) {
   }
 }
 
+TYPED_TEST(NesterovSolverTest,
+           TestNesterovLeastSquaresUpdateWithEverythingShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.9;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  this->share_ = true;
+  for (int i = 0; i <= kNumIters; ++i) {
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
+  }
+}
+
 TYPED_TEST(NesterovSolverTest, TestLeastSquaresUpdateWithEverythingAccum) {
   typedef typename TypeParam::Dtype Dtype;
   const Dtype kLearningRate = 0.01;
-  const Dtype kWeightDecay = 0.1;
+  const Dtype kWeightDecay = 0.5;
   const Dtype kMomentum = 0.9;
+  const Dtype kRMSDecay = 0;
   const int kNumIters = 4;
   const int kIterSize = 2;
-  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kNumIters,
-      kIterSize);
+  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kRMSDecay,
+      kNumIters, kIterSize);
+}
+
+TYPED_TEST(NesterovSolverTest, TestLeastSquaresUpdateWithEverythingAccumShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.9;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  const int kIterSize = 2;
+  this->share_ = true;
+  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kRMSDecay,
+      kNumIters, kIterSize);
+}
+
+TYPED_TEST(NesterovSolverTest, TestSnapshot) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.9;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  for (int i = 1; i <= kNumIters; ++i) {
+    this->TestSnapshot(kLearningRate, kWeightDecay, kMomentum, kRMSDecay, i);
+  }
+}
+
+TYPED_TEST(NesterovSolverTest, TestSnapshotShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.9;
+  const Dtype kRMSDecay = 0;
+  const int kNumIters = 4;
+  this->share_ = true;
+  for (int i = 1; i <= kNumIters; ++i) {
+    this->TestSnapshot(kLearningRate, kWeightDecay, kMomentum, kRMSDecay, i);
+  }
+}
+
+template <typename TypeParam>
+class RMSPropSolverTest : public GradientBasedSolverTest<TypeParam> {
+  typedef typename TypeParam::Dtype Dtype;
+
+ protected:
+  virtual void InitSolver(const SolverParameter& param) {
+    this->solver_.reset(new RMSPropSolver<Dtype>(param));
+  }
+  virtual SolverParameter_SolverType solver_type() {
+    return SolverParameter_SolverType_RMSPROP;
+  }
+};
+
+TYPED_TEST_CASE(RMSPropSolverTest, TestDtypesAndDevices);
+
+TYPED_TEST(RMSPropSolverTest, TestRMSPropLeastSquaresUpdateWithWeightDecay) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 1.0;
+  const Dtype kWeightDecay = 0.5;
+  this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay);
+}
+
+TYPED_TEST(RMSPropSolverTest, TestRMSPropLeastSquaresUpdateWithRmsDecay) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.0;
+  const Dtype kMomentum = 0.0;
+  const Dtype kRMSDecay = 0.95;
+  const int kNumIters = 4;
+  for (int i = 0; i <= kNumIters; ++i) {
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
+  }
+}
+
+TYPED_TEST(RMSPropSolverTest, TestRMSPropLeastSquaresUpdateWithEverything) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.0;
+  const Dtype kRMSDecay = 0.95;
+  const int kNumIters = 4;
+  for (int i = 0; i <= kNumIters; ++i) {
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
+  }
+}
+
+TYPED_TEST(RMSPropSolverTest,
+      TestRMSPropLeastSquaresUpdateWithEverythingShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.0;
+  const Dtype kRMSDecay = 0.95;
+  const int kNumIters = 4;
+  this->share_ = true;
+  for (int i = 0; i <= kNumIters; ++i) {
+    this->TestLeastSquaresUpdate(kLearningRate, kWeightDecay, kMomentum,
+        kRMSDecay, i);
+  }
+}
+
+TYPED_TEST(RMSPropSolverTest, TestLeastSquaresUpdateWithEverythingAccum) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.0;
+  const Dtype kRMSDecay = 0.95;
+  const int kNumIters = 4;
+  const int kIterSize = 2;
+  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kRMSDecay,
+      kNumIters, kIterSize);
+}
+
+TYPED_TEST(RMSPropSolverTest, TestLeastSquaresUpdateWithEverythingAccumShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0.0;
+  const Dtype kRMSDecay = 0.95;
+  const int kNumIters = 4;
+  const int kIterSize = 2;
+  this->share_ = true;
+  this->CheckAccumulation(kLearningRate, kWeightDecay, kMomentum, kRMSDecay,
+      kNumIters, kIterSize);
+}
+
+TYPED_TEST(RMSPropSolverTest, TestSnapshot) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0;
+  const Dtype kRMSDecay = 0.95;
+  const int kNumIters = 4;
+  for (int i = 1; i <= kNumIters; ++i) {
+    this->TestSnapshot(kLearningRate, kWeightDecay, kMomentum, kRMSDecay, i);
+  }
+}
+
+TYPED_TEST(RMSPropSolverTest, TestSnapshotShare) {
+  typedef typename TypeParam::Dtype Dtype;
+  const Dtype kLearningRate = 0.01;
+  const Dtype kWeightDecay = 0.5;
+  const Dtype kMomentum = 0;
+  const Dtype kRMSDecay = 0.95;
+  const int kNumIters = 4;
+  this->share_ = true;
+  for (int i = 1; i <= kNumIters; ++i) {
+    this->TestSnapshot(kLearningRate, kWeightDecay, kMomentum, kRMSDecay, i);
+  }
 }
 
 }  // namespace caffe
