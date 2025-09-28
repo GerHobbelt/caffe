@@ -1,3 +1,6 @@
+# Set Python installation directory
+set(CMAKE_INSTALL_PYTHONDIR lib/python3.11/dist-packages)
+
 # generate protobuf sources
 file(GLOB proto_files proto/*.proto)
 caffe_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto_python ${proto_files})
@@ -37,14 +40,17 @@ set_target_properties(caffe PROPERTIES
     )
 
 # ---[ Tests
- add_subdirectory(test)
+add_subdirectory(test)
 
 # ---[ Install
 install(DIRECTORY ${Caffe_INCLUDE_DIR}/caffe DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${proto_hdrs} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/caffe/proto)
 install(TARGETS caffe caffeproto EXPORT CaffeTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
+# Generate an __init__.py file to ensure Python packages are recognized
 file(WRITE ${PROJECT_BINARY_DIR}/__init__.py)
 list(APPEND proto_python ${PROJECT_BINARY_DIR}/__init__.py)
-install(PROGRAMS ${proto_python} DESTINATION python/caffe/proto)
+
+# Install Python files to the correct directory
+install(FILES ${proto_python} DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/caffe/proto)
 
