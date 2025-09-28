@@ -1,0 +1,3 @@
+[submodule "caffe-models"]
+	path = caffe-models
+	url = git@github.com:socal-ucr/caffe-models.git
