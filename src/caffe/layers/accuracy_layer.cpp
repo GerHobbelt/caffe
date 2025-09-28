@@ -41,9 +41,12 @@ void AccuracyLayer<Dtype>::Reshape(
       << "with integer values in {0, 1, ..., C-1}.";
   vector<int> top_shape(0);  // Accuracy is a scalar; 0 axes.
   top[0]->Reshape(top_shape);
-  if (top.size() == 2) {
-    int dim = bottom[0]->shape(1);
-    top[1]->Reshape(dim, 1, 1, 1);
+  if (top.size() > 1) {
+    // Per-class accuracy is a vector; 1 axes.
+    vector<int> top_shape_per_class(1);
+    top_shape_per_class[0] = bottom[0]->shape(label_axis_);
+    top[1]->Reshape(top_shape_per_class);
+    nums_buffer_.Reshape(top_shape_per_class);
   }
 }
 
@@ -57,9 +60,10 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   const int num_labels = bottom[0]->shape(label_axis_);
   vector<Dtype> maxval(top_k_+1);
   vector<int> max_id(top_k_+1);
-  vector<Dtype> accuracies(num_labels, 0);
-  vector<Dtype> nums(num_labels, 0);
-
+  if (top.size() > 1) {
+    caffe_set(nums_buffer_.count(), Dtype(0), nums_buffer_.mutable_cpu_data());
+    caffe_set(top[1]->count(), Dtype(0), top[1]->mutable_cpu_data());
+  }
   int count = 0;
   for (int i = 0; i < outer_num_; ++i) {
     for (int j = 0; j < inner_num_; ++j) {
@@ -68,10 +72,10 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       if (has_ignore_label_ && label_value == ignore_label_) {
         continue;
       }
+      if (top.size() > 1) ++nums_buffer_.mutable_cpu_data()[label_value];
       DCHECK_GE(label_value, 0);
       DCHECK_LT(label_value, num_labels);
       // Top-k accuracy
-      ++nums[label_value];
       std::vector<std::pair<Dtype, int> > bottom_data_vector;
       for (int k = 0; k < num_labels; ++k) {
         bottom_data_vector.push_back(std::make_pair(
@@ -84,7 +88,7 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       for (int k = 0; k < top_k_; k++) {
         if (bottom_data_vector[k].second == label_value) {
           ++accuracy;
-          ++accuracies[label_value];
+          if (top.size() > 1) ++top[1]->mutable_cpu_data()[label_value];
           break;
         }
       }
@@ -92,20 +96,13 @@ void AccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     }
   }
 
+  // LOG(INFO) << "Accuracy: " << accuracy;
   top[0]->mutable_cpu_data()[0] = accuracy / count;
-  if (top.size() >= 2) {
-    for (int i = 0; i < num_labels; ++i) {
-      if (nums[i] == 0) {
-      	if (accuracies[i] == 0) {
-          top[1]->mutable_cpu_data()[i] = 1;
-        }
-        else {
-          top[1]->mutable_cpu_data()[i] = 0;
-        }
-      }
-      else {
-      	top[1]->mutable_cpu_data()[i] = accuracies[i] / nums[i];
-      }
+  if (top.size() > 1) {
+    for (int i = 0; i < top[1]->count(); ++i) {
+      top[1]->mutable_cpu_data()[i] =
+          nums_buffer_.cpu_data()[i] == 0 ? 0
+          : top[1]->cpu_data()[i] / nums_buffer_.cpu_data()[i];
     }
   }
   // Accuracy layer should not be used as a loss function.
