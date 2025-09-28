@@ -45,6 +45,11 @@ function(caffe_generate_export_configs)
     endif()
   endforeach()
 
+  # This code is taken from https://github.com/sh1r0/caffe-android-lib
+  if(USE_HDF5)
+    list(APPEND Caffe_DEFINITIONS -DUSE_HDF5)
+  endif()
+
   set(LMDB_IMPORTED OFF)
   if(USE_LMDB)
     foreach(_lib ${LMDB_LIBRARIES})
