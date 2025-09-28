@@ -75,11 +75,11 @@ void GlobalInit(int* pargc, char*** pargv) {
 
 Caffe::Caffe()
     : random_generator_(), mode_(Caffe::CPU),
-      solver_count_(1), root_solver_(true) { }
+      solver_count_(1), root_solver_(true), solver_rank_(0), multiprocess_(false) { }
 
 Caffe::Caffe(Brew m)
     : cublas_handle_(NULL), curand_generator_(NULL), random_generator_(),
-      mode_(m), solver_count_(1), root_solver_(true) { }
+      mode_(m), solver_count_(1), root_solver_(true), solver_rank_(0), multiprocess_(false) { }
 
 Caffe::~Caffe() { }
 
@@ -136,12 +136,12 @@ void* Caffe::RNG::generator() {
 
 Caffe::Caffe()
     : cublas_handle_(NULL), curand_generator_(NULL), random_generator_(),
-    mode_(Caffe::CPU), solver_count_(1), root_solver_(true) {
+    mode_(Caffe::CPU), solver_count_(1), root_solver_(true), solver_rank_(0), multiprocess_(false) {
 }
 
 Caffe::Caffe(Brew m)
     : cublas_handle_(NULL), curand_generator_(NULL), random_generator_(),
-    mode_(m), solver_count_(1), root_solver_(true) {
+    mode_(m), solver_count_(1), root_solver_(true), solver_rank_(0), multiprocess_(false) {
 }
 
 Caffe::~Caffe() {
